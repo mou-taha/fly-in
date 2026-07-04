@@ -17,11 +17,11 @@ class ZoneType(Enum):
 class Zone:
 
     def __init__(self, name: str, color: str, coordinate: tuple[int, int],
-                 maxDrones: int, connection: List[Connection],
+                 maxDrones: int,
                  zoneType: ZoneType = ZoneType.NORMAL):
         self.name = name
         self.color = color
         self.coordinate = coordinate
         self.maxDrones = maxDrones
-        self.connection = connection
+        self.connections: List[Connection] = []
         self.zoneType = zoneType
