@@ -2,18 +2,20 @@ from models.zone import Zone, ZoneType
 from models.connection import Connection
 from models.space import Space
 from typing import Any
+from ..exceptions.parsingException import ParsingException
 
 
 class DataParser:
     def __init__(self, filePath: str) -> None:
         self.filePath = filePath
 
-    def parse_network_file(self) -> tuple[int, Space]:
-        nb_drones = 0
+    def parse_network_file(self) -> Space:
+        nb_drones = -1
         # dictionary to quickly look up zones by name
         zones_dict: dict[str, Zone] = {}
         # store connection lines to process after  all zones are created
         connections_data: list[str] = []
+        keyCounter: int = 0
 
         with open(self.filePath, 'r') as file:
             for line in file:
@@ -31,9 +33,13 @@ class DataParser:
                 value = value.strip()
 
                 if key == "nb_drones":
-                    nb_drones = int(value)
-
+                    keyCounter += 1
+                    try:
+                        nb_drones = int(value)
+                    except ValueError:
+                        raise ParsingException("""nb_drones must be a positif integer.""")
                 elif key in ("hub", "start_hub", "end_hub"):
+                    keyCounter += 1
                     # 1. Extract metadata
                     base_text, meta_dict = self.extract_metadata(value)
 
@@ -66,8 +72,14 @@ class DataParser:
                     zones_dict[name] = zone
 
                 elif key == "connection":
+                    keyCounter += 1
                     # save connections to process after all zones are created
                     connections_data.append(value)
+
+                if keyCounter >= 1 and nb_drones == -1:
+                    raise ParsingException(""" The first line must define
+                                           the number of drones using
+                                           nb_drones: <positive_integer>.""")
 
         # 5. process Connections now that all Zones exist
         for conn_str in connections_data:
@@ -94,9 +106,9 @@ class DataParser:
                         maxLinkCapacity=capacity))
 
         # 6. Create the Space object containing all our zones
-        space = Space(zones=set(zones_dict.values()))
+        space = Space(nbDrones=nb_drones, zones=set(zones_dict.values()))
 
-        return nb_drones, space
+        return space
 
     def extract_metadata(self, text: str) -> tuple[str, dict[str, Any]]:
         """

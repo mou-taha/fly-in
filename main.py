@@ -3,9 +3,9 @@ from helper.parser.dataParser import DataParser
 
 def main():
     parser: DataParser = DataParser("data.txt")
-    drones, my_space = parser.parse_network_file()
+    my_space = parser.parse_network_file()
 
-    print(f"Total Drones: {drones}")
+    print(f"Total Drones: {my_space.nbDrones}")
     print(f"Total Zones Loaded: {len(my_space.zones)}")
 
     # verify the connections and metadata worked
