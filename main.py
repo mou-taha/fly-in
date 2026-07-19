@@ -1,9 +1,16 @@
 from helper.parser.dataParser import DataParser
+from helper.exceptions.parsingException import ParsingException
+from models.space import Space
 
 
 def main():
     parser: DataParser = DataParser("data.txt")
-    my_space = parser.parse_network_file()
+    my_space: Space
+    try:
+        my_space = parser.parse_network_file()
+    except ParsingException as e:
+        print(e)
+        return
 
     print(f"Total Drones: {my_space.nbDrones}")
     print(f"Total Zones Loaded: {len(my_space.zones)}")

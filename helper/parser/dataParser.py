@@ -1,8 +1,9 @@
 from models.zone import Zone, ZoneType
 from models.connection import Connection
 from models.space import Space
-from typing import Any
+from typing import Any, List
 from ..exceptions.parsingException import ParsingException
+import re
 
 
 class DataParser:
@@ -17,8 +18,12 @@ class DataParser:
         connections_data: list[str] = []
         keyCounter: int = 0
 
-        with open(self.filePath, 'r') as file:
-            for line in file:
+        with open(self.filePath, "r") as file:
+            fileLines: List[str] = file.readlines()
+            lineValidations: List[str] = self.validate_lines(fileLines)
+            if len(lineValidations) > 0:
+                raise ParsingException("\n".join(lineValidations))
+            for index, line in enumerate(fileLines):
                 line = line.strip()
 
                 # skip empty lines and comments
@@ -37,7 +42,10 @@ class DataParser:
                     try:
                         nb_drones = int(value)
                     except ValueError:
-                        raise ParsingException("""nb_drones must be a positif integer.""")
+                        raise ParsingException(
+                            f"line {index+1}: the value of "
+                            "nb_drones must be a positif integer."
+                        )
                 elif key in ("hub", "start_hub", "end_hub"):
                     keyCounter += 1
                     # 1. Extract metadata
@@ -46,9 +54,14 @@ class DataParser:
                     # 2. Parse base text: "name x y"
                     parts = base_text.split()
                     name = parts[0]
-                    x = int(parts[1])
-                    y = int(parts[2])
-
+                    try:
+                        x = int(parts[1])
+                        y = int(parts[2])
+                    except (ValueError, IndexError):
+                        raise ParsingException(
+                            f"line {index+1}: the zone coordinate must be "
+                            "a valid integer."
+                        )
                     # 3. Apply defaults & metadata
                     # Default values based on your rules
                     color: str = meta_dict.get("color", "none")
@@ -67,7 +80,7 @@ class DataParser:
                         color=color,
                         coordinate=(x, y),
                         maxDrones=max_drones,
-                        zoneType=zone_type
+                        zoneType=zone_type,
                     )
                     zones_dict[name] = zone
 
@@ -77,9 +90,11 @@ class DataParser:
                     connections_data.append(value)
 
                 if keyCounter >= 1 and nb_drones == -1:
-                    raise ParsingException(""" The first line must define
-                                           the number of drones using
-                                           nb_drones: <positive_integer>.""")
+                    raise ParsingException(
+                        "The first line must define "
+                        "the number of drones using "
+                        "nb_drones: <positive_integer>."
+                    )
 
         # 5. process Connections now that all Zones exist
         for conn_str in connections_data:
@@ -98,12 +113,12 @@ class DataParser:
 
                     # it's bidirectional, so we add
                     # a Connection object to BOTH zones
-                    zoneA.connections.append(Connection(
-                        zone=zoneB,
-                        maxLinkCapacity=capacity))
-                    zoneB.connections.append(Connection(
-                        zone=zoneA,
-                        maxLinkCapacity=capacity))
+                    zoneA.connections.append(
+                        Connection(zone=zoneB, maxLinkCapacity=capacity)
+                    )
+                    zoneB.connections.append(
+                        Connection(zone=zoneA, maxLinkCapacity=capacity)
+                    )
 
         # 6. Create the Space object containing all our zones
         space = Space(nbDrones=nb_drones, zones=set(zones_dict.values()))
@@ -131,7 +146,32 @@ class DataParser:
 
         return text.strip(), {}
 
-    # TODO: i;plement validation
+    def validate_lines(self, lines: List[str]) -> List[str]:
+        result: List[str] = []
+        # TODO: edit the regexs to make it accept any value to handle type error at parsing stage
+        patterns: dict[str, str] = {
+            "nbDrone": r"nb_drones:\s?.+$",
+            "comment": r"^#.*",
+            "zone": r"^(?P<type>start_hub|hub|end_hub):\s*(?P<name>[^- ]*)\s+(?P<x>-?.*[^\s])\s+(?P<y>-?[^\s])\s*(?P<metadata>\[\s*(?:(?:(?P<colorTag>color=[a-zA-Z]+)|(?P<zone>zone=(?P<zoneType>normal|blocked|restricted|priority))|(?P<maxDrones>max_drones=\d+))\s*)*\])?$",
+            "connection": r"^connection:\s*(?P<name1>[^- ]+)-(?P<name2>[^- ]+)+\s*"
+            r"(?P<metadata>\[\s*max_link_capacity\s*=\s*\d*\s*])?$",
+        }
+        isMatched: bool = False
+        for index, line in enumerate(lines):
+            line = line.split("#")[0]
+            if not line or not line.strip():
+                continue
+            for _, pattern in patterns.items():
+                if re.match(pattern, line):
+                    isMatched = True
+            if isMatched is False:
+                result.append(
+                    f'line "{index+1}" dosent respect the format\n {line}'
+                )
+            isMatched = False
+        return result
+
+    # TODO: implement validation
     # def validateDrones(self, nbDrones: str) -> int:
     #     pass
 
