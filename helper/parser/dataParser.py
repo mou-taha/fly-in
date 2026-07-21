@@ -39,13 +39,7 @@ class DataParser:
 
                 if key == "nb_drones":
                     keyCounter += 1
-                    try:
-                        nb_drones = int(value)
-                    except ValueError:
-                        raise ParsingException(
-                            f"line {index+1}: the value of "
-                            "nb_drones must be a positif integer."
-                        )
+                    nb_drones = int(value)
                 elif key in ("hub", "start_hub", "end_hub"):
                     keyCounter += 1
                     # 1. Extract metadata
@@ -148,41 +142,90 @@ class DataParser:
 
     def validate_lines(self, lines: List[str]) -> List[str]:
         result: List[str] = []
-        # TODO: edit the regexs to make it accept any value to handle type error at parsing stage
-        patterns: dict[str, str] = {
-            "nbDrone": r"nb_drones:\s?.+$",
-            "comment": r"^#.*",
-            "zone": r"^(?P<type>start_hub|hub|end_hub):\s*(?P<name>[^- ]*)\s+(?P<x>-?.*[^\s])\s+(?P<y>-?[^\s])\s*(?P<metadata>\[\s*(?:(?:(?P<colorTag>color=[a-zA-Z]+)|(?P<zone>zone=(?P<zoneType>normal|blocked|restricted|priority))|(?P<maxDrones>max_drones=\d+))\s*)*\])?$",
-            "connection": r"^connection:\s*(?P<name1>[^- ]+)-(?P<name2>[^- ]+)+\s*"
-            r"(?P<metadata>\[\s*max_link_capacity\s*=\s*\d*\s*])?$",
-        }
-        isMatched: bool = False
-        for index, line in enumerate(lines):
-            line = line.split("#")[0]
-            if not line or not line.strip():
+        for index, raw_line in enumerate(lines):
+            line = raw_line.split("#", 1)[0].strip()
+            if not line:
                 continue
-            for _, pattern in patterns.items():
-                if re.match(pattern, line):
-                    isMatched = True
-            if isMatched is False:
+
+            if ":" not in line:
                 result.append(
-                    f'line "{index+1}" dosent respect the format\n {line}'
+                    f'line {index+1}: missing ":" separator\n  {raw_line.strip()}'
                 )
-            isMatched = False
+                continue
+
+            key, value = line.split(":", 1)
+            key = key.strip()
+            value = value.strip()
+
+            if key == "nb_drones":
+                error = self._validate_nb_drones(value)
+            elif key in ("hub", "start_hub", "end_hub"):
+                error = self._validate_zone_line(key, value)
+            elif key == "connection":
+                error = self._validate_connection_line(value)
+            else:
+                error = f'unknown key "{key}".'
+
+            if error:
+                result.append(f'line {index+1}: {error}\n  {raw_line.strip()}')
+
         return result
 
-    # TODO: implement validation
-    # def validateDrones(self, nbDrones: str) -> int:
-    #     pass
+    def _validate_nb_drones(self, value: str) -> str | None:
+        if not value:
+            return "nb_drones requires a positive integer value."
+        if not re.fullmatch(r"\d+", value):
+            return "nb_drones must be a positive integer."
+        return None
 
-    # def validateStartHub(self, startHub: str) -> Zone:
-    #     pass
+    def _validate_zone_line(self, key: str, value: str) -> str | None:
+        base_text, meta_dict = self.extract_metadata(value)
+        parts = base_text.split()
+        if len(parts) < 3:
+            return f'{key} must be followed by "name x y".'
 
-    # def validateEndHub(self, endHub: str) -> Zone:
-    #     pass
+        name, x_text, y_text = parts[0], parts[1], parts[2]
+        if not name:
+            return "zone name is missing."
 
-    # def validateHub(self, hub: str) -> Zone:
-    #     pass
+        if not re.fullmatch(r"-?\d+", x_text):
+            return f'x coordinate "{x_text}" must be an integer.'
+        if not re.fullmatch(r"-?\d+", y_text):
+            return f'y coordinate "{y_text}" must be an integer.'
 
-    # def validateConnection(self, connection: str) -> Connection:
-    #     pass
+        for meta_key, meta_value in meta_dict.items():
+            if meta_key == "color":
+                if not re.fullmatch(r"[A-Za-z]+", meta_value):
+                    return f'color value "{meta_value}" must contain only letters.'
+            elif meta_key == "max_drones":
+                if not re.fullmatch(r"\d+", meta_value):
+                    return f'max_drones value "{meta_value}" must be a positive integer.'
+            elif meta_key == "zone":
+                if meta_value.lower() not in {"normal", "blocked", "restricted", "priority"}:
+                    return (
+                        f'zone value "{meta_value}" must be one of normal, blocked, restricted, priority.'
+                    )
+            else:
+                return f'unknown metadata key "{meta_key}".'
+
+        return None
+
+    def _validate_connection_line(self, value: str) -> str | None:
+        base_text, meta_dict = self.extract_metadata(value)
+        if "-" not in base_text:
+            return 'connection must be formatted as "zoneA-zoneB".'
+
+        name1, name2 = base_text.split("-", 1)
+        if not name1 or not name2:
+            return "connection must include two zone names."
+        if " " in name1 or " " in name2:
+            return "connection zone names may not contain spaces."
+
+        for meta_key, meta_value in meta_dict.items():
+            if meta_key == "max_link_capacity":
+                if not re.fullmatch(r"\d+", meta_value):
+                    return f'max_link_capacity value "{meta_value}" must be a positive integer.'
+            else:
+                return f'unknown metadata key "{meta_key}".'
+
+        return None
