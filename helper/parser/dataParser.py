@@ -1,6 +1,6 @@
 from models.zone import Zone, ZoneType
 from models.connection import Connection
-from models.space import Space
+from models.map import Map
 from typing import Any, List
 from ..exceptions.parsingException import ParsingException
 import re
@@ -10,12 +10,12 @@ class DataParser:
     def __init__(self, filePath: str) -> None:
         self.filePath = filePath
 
-    def parse_network_file(self) -> Space:
+    def parse_network_file(self) -> Map:
         nb_drones = -1
         # dictionary to quickly look up zones by name
         zones_dict: dict[str, Zone] = {}
         # store connection lines to process after  all zones are created
-        connections_data: list[str] = []
+        connections_data: list[ tuple[int, str]] = [(0, "")]
         keyCounter: int = 0
 
         with open(self.filePath, "r") as file:
@@ -81,7 +81,7 @@ class DataParser:
                 elif key == "connection":
                     keyCounter += 1
                     # save connections to process after all zones are created
-                    connections_data.append(value)
+                    connections_data.append((index + 1, value))
 
                 if keyCounter >= 1 and nb_drones == -1:
                     raise ParsingException(
@@ -91,7 +91,7 @@ class DataParser:
                     )
 
         # 5. process Connections now that all Zones exist
-        for conn_str in connections_data:
+        for conn_line, conn_str in connections_data:
             base_text, meta_dict = self.extract_metadata(conn_str)
 
             # connections are formatted as "zoneA-zoneB"
@@ -101,8 +101,15 @@ class DataParser:
                 # retrieve the actual Zone objects we created earlier
                 zoneA: Zone | None = zones_dict.get(nameA)
                 zoneB: Zone | None = zones_dict.get(nameB)
-
-                if zoneA and zoneB:
+                if not zoneA:
+                    raise ParsingException(
+                        f"line {conn_line}: Connection error, Zone '{nameA}' does not exist."
+                    )
+                elif not zoneB:
+                    raise ParsingException(
+                        f"line {conn_line}: Connection error, Zone '{nameB}' does not exist."
+                    )
+                elif zoneA and zoneB:
                     capacity = int(meta_dict.get("max_link_capacity", 1))
 
                     # it's bidirectional, so we add
@@ -114,30 +121,53 @@ class DataParser:
                         Connection(zone=zoneA, maxLinkCapacity=capacity)
                     )
 
-        # 6. Create the Space object containing all our zones
-        space = Space(nbDrones=nb_drones, zones=set(zones_dict.values()))
+        # 6. Create the Map object containing all our zones
+        map = Map(nbDrones=nb_drones, zones=set(zones_dict.values()))
 
-        return space
+        return map
 
+    #TODO: test new extract_metadata function
     def extract_metadata(self, text: str) -> tuple[str, dict[str, Any]]:
         """
         Separates the base text from the metadata brackets.
         Returns: (base_text, metadata_dict)
         """
-        if "[" in text and "]" in text:
-            base, meta_raw = text.split("[", 1)
-            base = base.strip()
-            meta_raw = meta_raw.replace("]", "").strip()
-            # Convert "zone=restricted color=red" into
-            # {'zone': 'restricted', 'color': 'red'}
-            meta_dict: dict[str, Any] = {}
-            for item in meta_raw.split():
-                if "=" in item:
-                    key, val = item.split("=", 1)
-                    meta_dict[key] = val
-            return base, meta_dict
+        has_open = "[" in text
+        has_close = "]" in text
 
-        return text.strip(), {}
+        if has_open and not has_close:
+            raise ParsingException(
+                f"Invalid metadata format: missing closing bracket ']' in '{text}'"
+            )
+        if has_close and not has_open:
+            raise ParsingException(
+                f"Invalid metadata format: missing opening bracket '[' in '{text}'"
+            )
+        if not has_open and not has_close:
+            return text.strip(), {}
+
+        base, meta_raw = text.split("[", 1)
+        base = base.strip()
+        closing_bracket_index = meta_raw.rfind("]")
+        if closing_bracket_index == -1:
+            raise ParsingException(
+                f"Invalid metadata format: missing closing bracket ']' in '{text}'"
+            )
+
+        meta_raw = meta_raw[:closing_bracket_index].strip()
+        if not meta_raw:
+            return base, {}
+
+        meta_dict: dict[str, Any] = {}
+        for item in meta_raw.split():
+            if "=" not in item:
+                raise ParsingException(
+                    f"Invalid metadata format: '{item}'"
+                )
+            key, val = item.split("=", 1)
+            meta_dict[key] = val
+
+        return base, meta_dict
 
     def validate_lines(self, lines: List[str]) -> List[str]:
         result: List[str] = []
@@ -179,7 +209,10 @@ class DataParser:
         return None
 
     def _validate_zone_line(self, key: str, value: str) -> str | None:
-        base_text, meta_dict = self.extract_metadata(value)
+        try:
+            base_text, meta_dict = self.extract_metadata(value)
+        except ParsingException as e:
+            return str(e)
         parts = base_text.split()
         if len(parts) < 3:
             return f'{key} must be followed by "name x y".'
@@ -188,7 +221,7 @@ class DataParser:
         if not name:
             return "zone name is missing."
         if re.search(r"[- ]", name):
-            return "zone name must'nt contain spaces and dashes"
+            return "Zone names must not contain spaces or dashes"
         if not re.fullmatch(r"-?\d+", x_text):
             return f'x coordinate "{x_text}" must be an integer.'
         if not re.fullmatch(r"-?\d+", y_text):
@@ -197,12 +230,10 @@ class DataParser:
         for meta_key, meta_value in meta_dict.items():
             if meta_key == "color":
                 if not re.fullmatch(r"[A-Za-z]+", meta_value):
-                    return f'color value "{meta_value}"'
-                " must contain only letters."
+                    return f'invalid color value "{meta_value}", color must be a string containing only letters.'
             elif meta_key == "max_drones":
                 if not re.fullmatch(r"\d+", meta_value):
-                    return f'max_drones value "{meta_value}"'
-                " must be a positive integer."
+                    return f'max_drones value "{meta_value}" must be a positive integer.'
             elif meta_key == "zone":
                 if meta_value.lower() not in {
                     "normal",
@@ -220,10 +251,15 @@ class DataParser:
         return None
 
     def _validate_connection_line(self, value: str) -> str | None:
-        base_text, meta_dict = self.extract_metadata(value)
+        try:
+            base_text, meta_dict = self.extract_metadata(value)
+        except ParsingException as e:
+            return str(e)
+
         if "-" not in base_text:
             return 'connection must be formatted as "zoneA-zoneB".'
-
+        if base_text.count("-") != 1:
+            return 'connection must include exactly two zone names separated by a single dash "-".'
         name1, name2 = base_text.split("-", 1)
         if not name1 or not name2:
             return "connection must include two zone names."
@@ -233,8 +269,7 @@ class DataParser:
         for meta_key, meta_value in meta_dict.items():
             if meta_key == "max_link_capacity":
                 if not re.fullmatch(r"\d+", meta_value):
-                    return f'max_link_capacity value "{meta_value}"'
-                "must be a positive integer."
+                    return f'max_link_capacity value "{meta_value}" must be a positive integer.'
             else:
                 return f'unknown metadata key "{meta_key}".'
 
