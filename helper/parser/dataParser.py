@@ -128,7 +128,6 @@ class DataParser:
             base, meta_raw = text.split("[", 1)
             base = base.strip()
             meta_raw = meta_raw.replace("]", "").strip()
-
             # Convert "zone=restricted color=red" into
             # {'zone': 'restricted', 'color': 'red'}
             meta_dict: dict[str, Any] = {}
@@ -149,7 +148,8 @@ class DataParser:
 
             if ":" not in line:
                 result.append(
-                    f'line {index+1}: missing ":" separator\n  {raw_line.strip()}'
+                    f'line {index+1}: missing ":"'
+                    f"separator\n  {raw_line.strip()}"
                 )
                 continue
 
@@ -167,7 +167,7 @@ class DataParser:
                 error = f'unknown key "{key}".'
 
             if error:
-                result.append(f'line {index+1}: {error}\n  {raw_line.strip()}')
+                result.append(f"line {index+1}: {error}\n  {raw_line.strip()}")
 
         return result
 
@@ -187,7 +187,8 @@ class DataParser:
         name, x_text, y_text = parts[0], parts[1], parts[2]
         if not name:
             return "zone name is missing."
-
+        if re.search(r"[- ]", name):
+            return "zone name must'nt contain spaces and dashes"
         if not re.fullmatch(r"-?\d+", x_text):
             return f'x coordinate "{x_text}" must be an integer.'
         if not re.fullmatch(r"-?\d+", y_text):
@@ -196,14 +197,22 @@ class DataParser:
         for meta_key, meta_value in meta_dict.items():
             if meta_key == "color":
                 if not re.fullmatch(r"[A-Za-z]+", meta_value):
-                    return f'color value "{meta_value}" must contain only letters.'
+                    return f'color value "{meta_value}"'
+                " must contain only letters."
             elif meta_key == "max_drones":
                 if not re.fullmatch(r"\d+", meta_value):
-                    return f'max_drones value "{meta_value}" must be a positive integer.'
+                    return f'max_drones value "{meta_value}"'
+                " must be a positive integer."
             elif meta_key == "zone":
-                if meta_value.lower() not in {"normal", "blocked", "restricted", "priority"}:
+                if meta_value.lower() not in {
+                    "normal",
+                    "blocked",
+                    "restricted",
+                    "priority",
+                }:
                     return (
-                        f'zone value "{meta_value}" must be one of normal, blocked, restricted, priority.'
+                        f'zone value "{meta_value}" must be one of normal,'
+                        "blocked, restricted, priority."
                     )
             else:
                 return f'unknown metadata key "{meta_key}".'
@@ -224,7 +233,8 @@ class DataParser:
         for meta_key, meta_value in meta_dict.items():
             if meta_key == "max_link_capacity":
                 if not re.fullmatch(r"\d+", meta_value):
-                    return f'max_link_capacity value "{meta_value}" must be a positive integer.'
+                    return f'max_link_capacity value "{meta_value}"'
+                "must be a positive integer."
             else:
                 return f'unknown metadata key "{meta_key}".'
 
