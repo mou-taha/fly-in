@@ -15,7 +15,7 @@ class DataParser:
         # dictionary to quickly look up zones by name
         zones_dict: dict[str, Zone] = {}
         # store connection lines to process after  all zones are created
-        connections_data: list[ tuple[int, str]] = [(0, "")]
+        connections_data: list[tuple[int, str]] = [(0, "")]
         keyCounter: int = 0
 
         with open(self.filePath, "r") as file:
@@ -126,27 +126,34 @@ class DataParser:
 
         return map
 
-    #TODO: test new extract_metadata function
+    # TODO: test new extract_metadata function
     def extract_metadata(self, text: str) -> tuple[str, dict[str, Any]]:
         """
         Separates the base text from the metadata brackets.
         Returns: (base_text, metadata_dict)
         """
-        has_open = "[" in text
-        has_close = "]" in text
+        last__opening_bracket_index: int = text.rfind("[")
+        last__closing_bracket_index: int = text.rfind("]")
+        has_open = last__opening_bracket_index != -1
+        has_close = last__closing_bracket_index != -1
 
         if has_open and not has_close:
             raise ParsingException(
-                f"Invalid metadata format: missing closing bracket ']' in '{text}'"
+                "Invalid metadata format: missing closing bracket"
             )
         if has_close and not has_open:
             raise ParsingException(
-                f"Invalid metadata format: missing opening bracket '[' in '{text}'"
+                "Invalid metadata format: missing opening bracket"
             )
+        if not has_open and not has_close and len(text.split()) > 3:
+            raise ParsingException("Invalid metadata format: missing brackets")
         if not has_open and not has_close:
             return text.strip(), {}
 
-        base, meta_raw = text.split("[", 1)
+        base = text[:last__opening_bracket_index]
+        meta_raw = text[
+            last__opening_bracket_index+1: last__closing_bracket_index+1
+        ]
         base = base.strip()
         closing_bracket_index = meta_raw.rfind("]")
         if closing_bracket_index == -1:
@@ -160,10 +167,10 @@ class DataParser:
 
         meta_dict: dict[str, Any] = {}
         for item in meta_raw.split():
+            if item.strip() == "":
+                continue
             if "=" not in item:
-                raise ParsingException(
-                    f"Invalid metadata format: '{item}'"
-                )
+                raise ParsingException(f"Invalid metadata format: '{item}'")
             key, val = item.split("=", 1)
             meta_dict[key] = val
 
