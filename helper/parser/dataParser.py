@@ -1,4 +1,4 @@
-from models.zone import Zone, ZoneType
+from models.zone import Zone, ZoneType, ZoneCategory
 from models.connection import Connection
 from models.map import Map
 from typing import Any, List
@@ -11,6 +11,7 @@ class DataParser:
         self.filePath = filePath
 
     def parse_network_file(self) -> Map:
+        map = Map(nbDrones=0, zones=set())
         nb_drones = -1
         # dictionary to quickly look up zones by name
         zones_dict: dict[str, Zone] = {}
@@ -48,6 +49,19 @@ class DataParser:
                     # 2. Parse base text: "name x y"
                     parts = base_text.split()
                     name = parts[0]
+                    if (key == "start_hub" and ZoneCategory["START_HUB"] in [zone.category for zone in map.zones]):
+                        raise ParsingException(f"line {index+1}: start zone"
+                                               "already declared,"
+                                               "must be" 
+                                               " one start zone.\n {line}")
+                    if (key == "end_hub" and ZoneCategory["END_HUB"] in [zone.category for zone in map.zones]):
+                        raise ParsingException(f"line {index+1}: end zone"
+                                               " already declared,"
+                                               f" must be one"
+                                               " end zone.\n {line}")
+                    if name in [zone.name for zone in map.zones]:
+                        raise ParsingException(f"line {index+1}: duplicated"
+                                               f" zone name '{name}'")
                     try:
                         x = int(parts[1])
                         y = int(parts[2])
@@ -63,6 +77,7 @@ class DataParser:
 
                     # Parse the ZoneType Enum securely
                     zone_type_str = meta_dict.get("zone", "normal").upper()
+
                     try:
                         zone_type = ZoneType[zone_type_str]
                     except KeyError:
@@ -75,8 +90,9 @@ class DataParser:
                         coordinate=(x, y),
                         maxDrones=max_drones,
                         zoneType=zone_type,
+                        category=ZoneCategory[key.upper()]
                     )
-                    zones_dict[name] = zone
+                    map.zones.add(zone)
 
                 elif key == "connection":
                     keyCounter += 1
@@ -86,7 +102,7 @@ class DataParser:
                 if keyCounter >= 1 and nb_drones == -1:
                     raise ParsingException(
                         "The first line must define "
-                        "the number of drones using "
+                        "the number of drones using this pattern: "
                         "nb_drones: <positive_integer>."
                     )
 
@@ -99,15 +115,19 @@ class DataParser:
                 nameA, nameB = base_text.split("-", 1)
 
                 # retrieve the actual Zone objects we created earlier
-                zoneA: Zone | None = zones_dict.get(nameA)
-                zoneB: Zone | None = zones_dict.get(nameB)
+                zoneA: Zone | None = [zone for zone in map.zones
+                                      if zone.name == nameA][0]
+                zoneB: Zone | None = [zone for zone in map.zones
+                                      if zone.name == nameB][0]
                 if not zoneA:
                     raise ParsingException(
-                        f"line {conn_line}: Connection error, Zone '{nameA}' does not exist."
+                        f"line {conn_line}: Connection error, Zone '{nameA}'"
+                        "does not exist."
                     )
                 elif not zoneB:
                     raise ParsingException(
-                        f"line {conn_line}: Connection error, Zone '{nameB}' does not exist."
+                        f"line {conn_line}: Connection error, Zone '{nameB}'"
+                        "does not exist."
                     )
                 elif zoneA and zoneB:
                     capacity = int(meta_dict.get("max_link_capacity", 1))
@@ -122,8 +142,6 @@ class DataParser:
                     )
 
         # 6. Create the Map object containing all our zones
-        map = Map(nbDrones=nb_drones, zones=set(zones_dict.values()))
-
         return map
 
     # TODO: test new extract_metadata function
@@ -158,7 +176,8 @@ class DataParser:
         closing_bracket_index = meta_raw.rfind("]")
         if closing_bracket_index == -1:
             raise ParsingException(
-                f"Invalid metadata format: missing closing bracket ']' in '{text}'"
+                f"Invalid metadata format: missing closing"
+                f" bracket ']' in '{text}'"
             )
 
         meta_raw = meta_raw[:closing_bracket_index].strip()
@@ -220,15 +239,18 @@ class DataParser:
             base_text, meta_dict = self.extract_metadata(value)
         except ParsingException as e:
             return str(e)
+
         parts = base_text.split()
         if len(parts) < 3:
             return f'{key} must be followed by "name x y".'
-
+        elif len(parts) > 3:
+            return f"too many values. \"{base_text}\" should only contain"
+        "a name and two coordinates."
         name, x_text, y_text = parts[0], parts[1], parts[2]
         if not name:
             return "zone name is missing."
         if re.search(r"[- ]", name):
-            return "Zone names must not contain spaces or dashes"
+            return f"Zone names '{name}', must not contain spaces or dashes"
         if not re.fullmatch(r"-?\d+", x_text):
             return f'x coordinate "{x_text}" must be an integer.'
         if not re.fullmatch(r"-?\d+", y_text):
@@ -237,10 +259,12 @@ class DataParser:
         for meta_key, meta_value in meta_dict.items():
             if meta_key == "color":
                 if not re.fullmatch(r"[A-Za-z]+", meta_value):
-                    return f'invalid color value "{meta_value}", color must be a string containing only letters.'
+                    return f'invalid color value "{meta_value}", color must be'
+                'a string containing only letters.'
             elif meta_key == "max_drones":
                 if not re.fullmatch(r"\d+", meta_value):
-                    return f'max_drones value "{meta_value}" must be a positive integer.'
+                    return f'max_drones value "{meta_value}" must be a'
+                'positive integer.'
             elif meta_key == "zone":
                 if meta_value.lower() not in {
                     "normal",
@@ -266,8 +290,9 @@ class DataParser:
         if "-" not in base_text:
             return 'connection must be formatted as "zoneA-zoneB".'
         if base_text.count("-") != 1:
-            return 'connection must include exactly two zone names separated by a single dash "-".'
-        name1, name2 = base_text.split("-", 1)
+            return 'connection must include exactly two zone names separated'
+        'by a single dash "-".'
+        name1, name2 = base_text.split()[0].split("-", 1)
         if not name1 or not name2:
             return "connection must include two zone names."
         if " " in name1 or " " in name2:
@@ -276,7 +301,8 @@ class DataParser:
         for meta_key, meta_value in meta_dict.items():
             if meta_key == "max_link_capacity":
                 if not re.fullmatch(r"\d+", meta_value):
-                    return f'max_link_capacity value "{meta_value}" must be a positive integer.'
+                    return f'max_link_capacity value "{meta_value}"'
+                'must be a positive integer.'
             else:
                 return f'unknown metadata key "{meta_key}".'
 
