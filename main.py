@@ -19,10 +19,12 @@ def main():
     for zone in map.zones:
         print(f"\nInspecting {zone.name}:")
         print(f" - Coordinate: {zone.coordinate}")
-        print(f" - Type: {zone.zoneType.name}")
+        print(f" - Type: {zone.type.name}")
         print(f" - Color: {zone.color}")
         print(f" - Max Drones: {zone.maxDrones}")
-        print(f" - Connections: {[c.zone.name  + ' [max link capacity= ' + str(c.maxLinkCapacity) +']' for c in zone.connections]}")
+        print(
+            f" - Connections: {[c.zone.name  + ' [max link capacity= ' + str(c.maxLinkCapacity) +']' for c in zone.connections]}"
+        )
 
 
 if __name__ == "__main__":

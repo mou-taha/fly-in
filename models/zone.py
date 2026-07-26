@@ -1,7 +1,7 @@
 from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, List
-
+from sys import maxsize
 
 if TYPE_CHECKING:
     from models.connection import Connection
@@ -22,14 +22,34 @@ class ZoneCategory(Enum):
 
 class Zone:
 
-    def __init__(self, name: str, color: str, coordinate: tuple[int, int],
-                 maxDrones: int,
-                 zoneType: ZoneType = ZoneType.NORMAL,
-                 category: ZoneCategory = ZoneCategory.HUB):
+    def __init__(
+        self,
+        name: str,
+        color: str,
+        coordinate: tuple[int, int],
+        maxDrones: int,
+        type: ZoneType = ZoneType.NORMAL,
+        category: ZoneCategory = ZoneCategory.HUB,
+    ):
         self.name = name
         self.color = color
         self.coordinate = coordinate
         self.maxDrones = maxDrones
         self.connections: List[Connection] = []
-        self.zoneType = zoneType
+        self.type = type
         self.category = category
+
+    def zone_cost(self) -> float:
+        """return the cost of moving to this zone
+        based on zone Type
+        Returns:
+            float: zone cost
+        """
+        if self.type == ZoneType.RESTRICTED:
+            return 2
+        if self.type == ZoneType.NORMAL:
+            return 1
+        if self.type == ZoneType.PRIORITY:
+            return 0.99
+        else:
+            return maxsize
