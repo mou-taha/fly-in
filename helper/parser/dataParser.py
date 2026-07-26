@@ -11,10 +11,8 @@ class DataParser:
         self.filePath = filePath
 
     def parse_network_file(self) -> Map:
-        map = Map(nbDrones=0, zones=set())
-        nb_drones = -1
-        # dictionary to quickly look up zones by name
-        zones_dict: dict[str, Zone] = {}
+        map = Map(nbDrones=-1, zones=set())
+
         # store connection lines to process after  all zones are created
         connections_data: list[tuple[int, str]] = [(0, "")]
         keyCounter: int = 0
@@ -40,7 +38,12 @@ class DataParser:
 
                 if key == "nb_drones":
                     keyCounter += 1
-                    nb_drones = int(value)
+                    map.nbDrones = int(value)
+                    if map.nbDrones <= 0:
+                        raise ParsingException(
+                            f"line {index+1}: number of drones must be a "
+                            f"positif integer.\n {line}"
+                        )
                 elif key in ("hub", "start_hub", "end_hub"):
                     keyCounter += 1
                     # 1. Extract metadata
@@ -49,19 +52,29 @@ class DataParser:
                     # 2. Parse base text: "name x y"
                     parts = base_text.split()
                     name = parts[0]
-                    if (key == "start_hub" and ZoneCategory["START_HUB"] in [zone.category for zone in map.zones]):
-                        raise ParsingException(f"line {index+1}: start zone"
-                                               "already declared,"
-                                               "must be" 
-                                               " one start zone.\n {line}")
-                    if (key == "end_hub" and ZoneCategory["END_HUB"] in [zone.category for zone in map.zones]):
-                        raise ParsingException(f"line {index+1}: end zone"
-                                               " already declared,"
-                                               f" must be one"
-                                               " end zone.\n {line}")
+                    if key == "start_hub" and ZoneCategory["START_HUB"] in [
+                        zone.category for zone in map.zones
+                    ]:
+                        raise ParsingException(
+                            f"line {index+1}: start zone "
+                            "already declared,"
+                            "must be"
+                            f" one start zone.\n {line}"
+                        )
+                    if key == "end_hub" and ZoneCategory["END_HUB"] in [
+                        zone.category for zone in map.zones
+                    ]:
+                        raise ParsingException(
+                            f"line {index+1}: end zone"
+                            " already declared,"
+                            f" must be one"
+                            " end zone.\n {line}"
+                        )
                     if name in [zone.name for zone in map.zones]:
-                        raise ParsingException(f"line {index+1}: duplicated"
-                                               f" zone name '{name}'")
+                        raise ParsingException(
+                            f"line {index+1}: duplicated"
+                            f" zone name '{name}'"
+                        )
                     try:
                         x = int(parts[1])
                         y = int(parts[2])
@@ -73,7 +86,9 @@ class DataParser:
                     # 3. Apply defaults & metadata
                     # Default values based on your rules
                     color: str = meta_dict.get("color", "none")
-                    max_drones = int(meta_dict.get("max_drones", 1))
+                    max_drones = 0
+                    if key.upper() == "HUB":
+                        max_drones = int(meta_dict.get("max_drones", 1))
 
                     # Parse the ZoneType Enum securely
                     zone_type_str = meta_dict.get("zone", "normal").upper()
@@ -89,8 +104,8 @@ class DataParser:
                         color=color,
                         coordinate=(x, y),
                         maxDrones=max_drones,
-                        zoneType=zone_type,
-                        category=ZoneCategory[key.upper()]
+                        type=zone_type,
+                        category=ZoneCategory[key.upper()],
                     )
                     map.zones.add(zone)
 
@@ -99,41 +114,76 @@ class DataParser:
                     # save connections to process after all zones are created
                     connections_data.append((index + 1, value))
 
-                if keyCounter >= 1 and nb_drones == -1:
+                if keyCounter >= 1 and map.nbDrones == -1:
                     raise ParsingException(
                         "The first line must define "
                         "the number of drones using this pattern: "
                         "nb_drones: <positive_integer>."
                     )
-
+        is_end_zone_exist: int = len(
+            [
+                zone
+                for zone in map.zones
+                if zone.category == ZoneCategory["END_HUB"]
+            ]
+        )
+        if is_end_zone_exist == 0:
+            raise ParsingException("error: end zone not defined")
+        is_start_zone_exist: int = len(
+            [
+                zone
+                for zone in map.zones
+                if zone.category == ZoneCategory["START_HUB"]
+            ]
+        )
+        if is_start_zone_exist == 0:
+            raise ParsingException("error: start zone not defined")
         # 5. process Connections now that all Zones exist
         for conn_line, conn_str in connections_data:
             base_text, meta_dict = self.extract_metadata(conn_str)
 
-            # connections are formatted as "zoneA-zoneB"
+            # extract connections, that are formatted as "start-zoneB"
             if "-" in base_text:
                 nameA, nameB = base_text.split("-", 1)
 
+                unfoundedZone: str = ""
                 # retrieve the actual Zone objects we created earlier
-                zoneA: Zone | None = [zone for zone in map.zones
-                                      if zone.name == nameA][0]
-                zoneB: Zone | None = [zone for zone in map.zones
-                                      if zone.name == nameB][0]
-                if not zoneA:
+                # if the access to index 0 is raise a value error exception
+                # that mean the given connection zone is not exist.
+                try:
+                    unfoundedZone = nameA
+                    zoneA: Zone | None = [
+                        zone for zone in map.zones if zone.name == nameA
+                    ][0]
+                    unfoundedZone = nameB
+                    zoneB: Zone | None = [
+                        zone for zone in map.zones if zone.name == nameB
+                    ][0]
+                except IndexError:
                     raise ParsingException(
-                        f"line {conn_line}: Connection error, Zone '{nameA}'"
-                        "does not exist."
+                        f"line {conn_line}: Connection error, Zone "
+                        f"'{unfoundedZone}' does not exist.\n   {conn_str}"
                     )
-                elif not zoneB:
-                    raise ParsingException(
-                        f"line {conn_line}: Connection error, Zone '{nameB}'"
-                        "does not exist."
-                    )
-                elif zoneA and zoneB:
+                if zoneA and zoneB:
                     capacity = int(meta_dict.get("max_link_capacity", 1))
 
                     # it's bidirectional, so we add
                     # a Connection object to BOTH zones
+                    isConnExist: bool = (
+                        len(
+                            [
+                                connection
+                                for connection in zoneA.connections
+                                if connection.zone.name == zoneB.name
+                            ]
+                        )
+                        > 0
+                    )
+                    if isConnExist:
+                        raise ParsingException(
+                            f"line {conn_line}: duplicated connection "
+                            f"{base_text}\n  {conn_str}"
+                        )
                     zoneA.connections.append(
                         Connection(zone=zoneB, maxLinkCapacity=capacity)
                     )
@@ -144,7 +194,6 @@ class DataParser:
         # 6. Create the Map object containing all our zones
         return map
 
-    # TODO: test new extract_metadata function
     def extract_metadata(self, text: str) -> tuple[str, dict[str, Any]]:
         """
         Separates the base text from the metadata brackets.
@@ -170,7 +219,7 @@ class DataParser:
 
         base = text[:last__opening_bracket_index]
         meta_raw = text[
-            last__opening_bracket_index+1: last__closing_bracket_index+1
+            last__opening_bracket_index + 1 : last__closing_bracket_index + 1
         ]
         base = base.strip()
         closing_bracket_index = meta_raw.rfind("]")
@@ -244,27 +293,31 @@ class DataParser:
         if len(parts) < 3:
             return f'{key} must be followed by "name x y".'
         elif len(parts) > 3:
-            return f"too many values. \"{base_text}\" should only contain"
-        "a name and two coordinates."
+            return (
+                f"too many values '{base_text}', should only contain"
+                " a name and two coordinates and metadata."
+            )
         name, x_text, y_text = parts[0], parts[1], parts[2]
         if not name:
             return "zone name is missing."
         if re.search(r"[- ]", name):
             return f"Zone names '{name}', must not contain spaces or dashes"
-        if not re.fullmatch(r"-?\d+", x_text):
+        if not re.fullmatch(r"^[+-]?\d+$", x_text):
             return f'x coordinate "{x_text}" must be an integer.'
-        if not re.fullmatch(r"-?\d+", y_text):
+        if not re.fullmatch(r"^[+-]?\d+$", y_text):
             return f'y coordinate "{y_text}" must be an integer.'
 
         for meta_key, meta_value in meta_dict.items():
             if meta_key == "color":
                 if not re.fullmatch(r"[A-Za-z]+", meta_value):
                     return f'invalid color value "{meta_value}", color must be'
-                'a string containing only letters.'
+                "a string containing only letters."
             elif meta_key == "max_drones":
-                if not re.fullmatch(r"\d+", meta_value):
-                    return f'max_drones value "{meta_value}" must be a'
-                'positive integer.'
+                if not re.fullmatch(r"\+?[1-9]+", meta_value):
+                    return (
+                        f'max_drones value "{meta_value}" must be a'
+                        " positive integer."
+                    )
             elif meta_key == "zone":
                 if meta_value.lower() not in {
                     "normal",
@@ -273,7 +326,7 @@ class DataParser:
                     "priority",
                 }:
                     return (
-                        f'zone value "{meta_value}" must be one of normal,'
+                        "zone type must be one of normal,"
                         "blocked, restricted, priority."
                     )
             else:
@@ -290,7 +343,7 @@ class DataParser:
         if "-" not in base_text:
             return 'connection must be formatted as "zoneA-zoneB".'
         if base_text.count("-") != 1:
-            return 'connection must include exactly two zone names separated'
+            return "connection must include exactly two zone names separated"
         'by a single dash "-".'
         name1, name2 = base_text.split()[0].split("-", 1)
         if not name1 or not name2:
@@ -300,9 +353,11 @@ class DataParser:
 
         for meta_key, meta_value in meta_dict.items():
             if meta_key == "max_link_capacity":
-                if not re.fullmatch(r"\d+", meta_value):
-                    return f'max_link_capacity value "{meta_value}"'
-                'must be a positive integer.'
+                if not re.fullmatch(r"\+?[1-9]+", meta_value):
+                    return (
+                        f'max_link_capacity value "{meta_value}"'
+                        " must be a positive integer."
+                    )
             else:
                 return f'unknown metadata key "{meta_key}".'
 
