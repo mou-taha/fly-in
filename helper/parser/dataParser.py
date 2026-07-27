@@ -240,6 +240,8 @@ class DataParser:
             if "=" not in item:
                 raise ParsingException(f"Invalid metadata format: '{item}'")
             key, val = item.split("=", 1)
+            if len([k for k, v in meta_dict.items() if k == key]) > 0:
+                raise ParsingException(f"Duplicated metadata key: '{key}'")
             meta_dict[key] = val
 
         return base, meta_dict
