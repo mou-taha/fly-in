@@ -1,6 +1,7 @@
 from helper.parser.dataParser import DataParser
 from helper.exceptions.parsingException import ParsingException
 from models.map import Map
+from helper.pathfinding.path_finding import PathFinding
 
 
 def main():
@@ -11,9 +12,10 @@ def main():
     except ParsingException as e:
         print(e)
         return
-
+    
     print(f"Total Drones: {map.nbDrones}")
     print(f"Total Zones Loaded: {len(map.zones)}")
+
 
     # verify the connections and metadata worked
     for zone in map.zones:
@@ -25,6 +27,8 @@ def main():
         print(
             f" - Connections: {[c.zone.name  + ' [max link capacity= ' + str(c.maxLinkCapacity) +']' for c in zone.connections]}"
         )
+    path_finding: PathFinding = PathFinding(map)
+    print(path_finding.check_disconnected_zones())
 
 
 if __name__ == "__main__":
