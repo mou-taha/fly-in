@@ -145,7 +145,6 @@ class DataParser:
             # extract connections, that are formatted as "start-zoneB"
             if "-" in base_text:
                 nameA, nameB = base_text.split("-", 1)
-
                 unfoundedZone: str = ""
                 # retrieve the actual Zone objects we created earlier
                 # if the access to index 0 is raise a value error exception
@@ -164,6 +163,11 @@ class DataParser:
                         f"line {conn_line}: Connection error, Zone "
                         f"'{unfoundedZone}' does not exist.\n   {conn_str}"
                     )
+                if nameA.lower() == nameB.lower():
+                    raise ParsingException(
+                                        f"line {conn_line}: can't have reflexive connection\n"
+                                        f"{conn_str}"
+                                    )
                 if zoneA and zoneB:
                     capacity = int(meta_dict.get("max_link_capacity", 1))
 
@@ -219,7 +223,7 @@ class DataParser:
 
         base = text[:last__opening_bracket_index]
         meta_raw = text[
-            last__opening_bracket_index + 1 : last__closing_bracket_index + 1
+            last__opening_bracket_index + 1: last__closing_bracket_index + 1
         ]
         base = base.strip()
         closing_bracket_index = meta_raw.rfind("]")
