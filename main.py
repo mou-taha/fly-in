@@ -16,7 +16,7 @@ def main():
         print(f"Total Drones: {map.nbDrones}")
         print(f"Total Zones Loaded: {len(map.zones)}")
 
-        paths: list[Path] = path_finding.get_all_possible_paths()
+        paths: list[Path] = path_finding.find_shortest_paths()
         print(f"Total Paths: {len(paths)}")
 
         # 5. Print the results

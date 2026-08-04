@@ -1,5 +1,5 @@
 from typing import List
-from models.zone import Zone, ZoneCategory, ZoneType
+from models.zone import Zone
 
 
 class Path:
@@ -7,16 +7,4 @@ class Path:
         self.zones = zones
 
     def get_cost(self) -> int:
-        cost = 0
-        for zone in self.zones:
-            if zone.category == ZoneCategory.START_HUB:
-                continue
-            if zone.type == ZoneType.NORMAL:
-                cost = cost + 1
-            elif zone.type == ZoneType.RESTRICTED:
-                cost = cost + 2
-            elif zone.type == ZoneType.BLOCKED:
-                cost = cost + 1
-            elif zone.type == ZoneType.PRIORITY:
-                cost = cost + 0.99
-        return cost
+        return sum([zone.zone_cost() for zone in self.zones])
