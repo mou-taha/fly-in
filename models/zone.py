@@ -45,11 +45,16 @@ class Zone:
         Returns:
             float: zone cost
         """
-        if self.type == ZoneType.RESTRICTED:
+        if self.category == ZoneCategory.START_HUB:
+            return 0
+        elif self.type == ZoneType.RESTRICTED:
             return 2
-        if self.type == ZoneType.NORMAL:
+        elif self.type == ZoneType.NORMAL:
             return 1
-        if self.type == ZoneType.PRIORITY:
+        elif self.type == ZoneType.PRIORITY:
             return 0.99
         else:
             return maxsize
+
+    def is_goal_zone(self) -> bool:
+        return self.category == ZoneCategory.END_HUB

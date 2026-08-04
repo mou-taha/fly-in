@@ -3,6 +3,7 @@ from models.zone import Zone, ZoneCategory
 from models.path import Path
 from typing import List
 from helper.exceptions.path_finding_exception import PathFindingException
+import heapq
 
 
 class PathFinding:
@@ -17,7 +18,8 @@ class PathFinding:
         unvisited: List[Zone] = [start_zone]
         visited: list[Zone] = []
         if not end_zone or not start_zone:
-            raise PathFindingException("end zone or start zone are not defined")
+            raise PathFindingException("end zone or start zone"
+                                       " are not defined")
 
         while len(unvisited) > 0:
             current: Zone = unvisited.pop()
@@ -29,26 +31,7 @@ class PathFinding:
 
         return end_zone in visited
 
-    def find_paths(self) -> List[Path]:
-        # if not self._check_disconnected_zones():
-        #     raise PathFindingException("there is no path on the given "
-        #                                "map to the end zone.")
-
-        # start_zone: Zone = next((zone for zone in self.map.zones
-        #                          if zone.type == ZoneCategory.START_HUB), None)
-        # if start_zone is None:
-        #     raise PathFindingException("there is no start zone on the given"
-        #                                " map")
-
-        # paths: List[tuple[Path, bool]] = (Path([start_zone]))
-        # # iterate over the list of paths where path doesn't get to end
-        # for path in [item[0] for item in paths
-        #              if item[1] is False]:
-        #     conns = path.zones[-1].connections
-        # return paths
-        pass
-
-    def get_all_possible_paths(self) -> list[Path]:
+    def get_all_possible_paths(self) -> List[Path]:
         """
         Finds all possible simple paths between a start and end zone on a map.
 
@@ -96,3 +79,28 @@ class PathFinding:
         dfs(start_zone, [], set())
 
         return all_paths
+
+    def find_shortest_paths(self) -> List[Path]:
+        """finding shortest path using Dijkstra"""
+        start_zone: Zone = self.map.get_start_zone()
+        paths: List[tuple[float, Path]] = [(0, Path([start_zone]))]
+        result: List[Path] = []
+        while paths:
+            current_path_weight: float
+            current_path: Path
+            current_path_weight, current_path = paths.pop(0)
+            current_zone: Zone = current_path.zones[-1]
+
+            if current_zone.is_goal_zone():
+                result.append(current_path)
+                continue
+
+            for neighbor in current_zone.connections:
+                if neighbor.zone in current_path.zones:
+                    continue
+                new_path = Path(current_path.zones.copy()) 
+                new_path.zones.append(neighbor.zone)
+                heapq.heappush(paths, (neighbor.zone.zone_cost()
+                               + current_path_weight, new_path))
+
+        return result
