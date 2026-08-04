@@ -36,7 +36,7 @@ def main():
         #         f" - Connections: {[c.zone.name  + ' [max link capacity= ' + str(c.maxLinkCapacity) +']' for c in zone.connections]}"
         #     )
     except (ParsingException, PathFindingException) as e:
-        print("error : ", e)
+        print(e)
 
 
 if __name__ == "__main__":
