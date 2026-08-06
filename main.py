@@ -25,6 +25,15 @@ def main():
             print(f"Path {i}: {' -> '.join(path_names)}")
             print(f"Path cost: {path.get_cost()}")
 
+        print("\n\n\n\n\nFinding all possible paths:")
+        paths: list[Path] = path_finding.get_all_possible_paths()
+        print(f"Total Paths: {len(paths)}")
+        for i, path in enumerate(paths, 1):
+            path_names = [zone.name for zone in path.zones]
+            print(f"Path {i}: {' -> '.join(path_names)}")
+            print(f"Path cost: {path.get_cost()}")
+        
+
         # verify the connections and metadata worked
         # for zone in map.zones:
         #     print(f"\nInspecting {zone.name}:") 
