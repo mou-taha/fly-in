@@ -81,13 +81,17 @@ class PathFinding:
 
     def find_shortest_paths(self) -> List[Path]:
         """finding shortest path using Dijkstra"""
+        if not self._check_disconnected_zones():
+            raise PathFindingException("there is no path on the given "
+                                       "map to the end zone.")
         start_zone: Zone = self.map.get_start_zone()
-        paths: List[tuple[float, Path]] = [(0, Path([start_zone]))]
+        paths: List[tuple[float, int, Path]] = [(0, 0, Path([start_zone]))]
         result: List[Path] = []
+        counter: int = 0
         while paths:
             current_path_weight: float
             current_path: Path
-            current_path_weight, current_path = paths.pop(0)
+            current_path_weight, _, current_path = paths.pop(0)
             current_zone: Zone = current_path.zones[-1]
 
             if current_zone.is_goal_zone():
@@ -97,9 +101,10 @@ class PathFinding:
             for neighbor in current_zone.connections:
                 if neighbor.zone in current_path.zones:
                     continue
-                new_path = Path(current_path.zones.copy()) 
+                new_path = Path(list.copy(current_path.zones))
                 new_path.zones.append(neighbor.zone)
                 heapq.heappush(paths, (neighbor.zone.zone_cost()
-                               + current_path_weight, new_path))
+                               + current_path_weight, counter, new_path))
+                counter += 1
 
         return result
