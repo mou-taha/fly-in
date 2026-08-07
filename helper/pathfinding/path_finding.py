@@ -1,5 +1,5 @@
 from models.map import Map
-from models.zone import Zone, ZoneCategory
+from models.zone import Zone, ZoneCategory, ZoneType
 from models.path import Path
 from typing import List
 from helper.exceptions.path_finding_exception import PathFindingException
@@ -59,6 +59,11 @@ class PathFinding:
             # to avoid cycles
             current_path.append(current_zone)
 
+            # if the zone is blocked we will not continue the path
+            if current_zone.type == ZoneType.BLOCKED:
+                current_path.pop()
+                return
+
             # If we reached the destination,
             # add a copy of the path to our results
             if current_zone.name == end_zone.name:
@@ -76,7 +81,7 @@ class PathFinding:
 
         # Initialize the recursive dfs function with the start zone
         dfs(start_zone, [])
-
+        all_paths = sorted(all_paths, key=lambda path: path.get_cost())
         return all_paths
 
     def find_shortest_paths(self) -> List[Path]:
@@ -93,6 +98,10 @@ class PathFinding:
             current_path: Path
             current_path_weight, _, current_path = paths.pop(0)
             current_zone: Zone = current_path.zones[-1]
+
+            # if the zone is blocked we will not continue the path
+            if current_zone.type == ZoneType.BLOCKED:
+                continue
 
             if current_zone.is_goal_zone():
                 result.append(current_path)

@@ -7,3 +7,8 @@ class Simulator:
     def __init__(self, map: Map, paths: List[Path]):
         self.map = map
         self.paths = paths
+
+    def run(self):
+        pass
+    
+    
