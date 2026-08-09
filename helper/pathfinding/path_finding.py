@@ -99,7 +99,7 @@ class PathFinding:
             current_path_weight, _, current_path = paths.pop(0)
             current_zone: Zone = current_path.zones[-1]
 
-            # if the zone is blocked we will not continue the path
+            # if the zone is blocked we will not continue discovring the path
             if current_zone.type == ZoneType.BLOCKED:
                 continue
 

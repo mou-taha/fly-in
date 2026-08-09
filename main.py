@@ -1,9 +1,11 @@
 from helper.parser.dataParser import DataParser
 from helper.exceptions.parsingException import ParsingException
 from helper.exceptions.path_finding_exception import PathFindingException
+from helper.exceptions.simulation_exception import SimulationException
 from models.map import Map
 from models.path import Path
 from helper.pathfinding.path_finding import PathFinding
+from models.simulator import Simulator
 
 
 def main():
@@ -16,35 +18,17 @@ def main():
         print(f"Total Drones: {map.nbDrones}")
         print(f"Total Zones Loaded: {len(map.zones)}")
 
-        paths: list[Path] = path_finding.find_shortest_paths()
-        print(f"Total Paths: {len(paths)}")
-
-        # 5. Print the results
-        for i, path in enumerate(paths, 1):
-            path_names = [zone.name for zone in path.zones]
-            print(f"Path {i}: {' -> '.join(path_names)}")
-            print(f"Path cost: {path.get_cost()}")
-
         print("\n\n\n\n\nFinding all possible paths:")
         paths: list[Path] = path_finding.get_all_possible_paths()
         print(f"Total Paths: {len(paths)}")
-        for i, path in enumerate(paths, 1):
-            path_names = [zone.name for zone in path.zones]
-            print(f"Path {i}: {' -> '.join(path_names)}")
-            print(f"Path cost: {path.get_cost()}")
-        
-
-        # verify the connections and metadata worked
-        # for zone in map.zones:
-        #     print(f"\nInspecting {zone.name}:") 
-        #     print(f" - Coordinate: {zone.coordinate}")
-        #     print(f" - Type: {zone.type.name}")
-        #     print(f" - Color: {zone.color}")
-        #     print(f" - Max Drones: {zone.maxDrones}")
-        #     print(
-        #         f" - Connections: {[c.zone.name  + ' [max link capacity= ' + str(c.maxLinkCapacity) +']' for c in zone.connections]}"
-        #     )
-    except (ParsingException, PathFindingException) as e:
+        # for i, path in enumerate(paths, 1):
+        #     path_names = [zone.name for zone in path.zones]
+        #     print(f"Path {i}: {' -> '.join(path_names)}")
+        #     print(f"Path cost: {path.get_cost()}")
+        map.paths = paths
+        simulator: Simulator = Simulator(map)
+        simulator.run()
+    except (ParsingException, PathFindingException, SimulationException) as e:
         print(e)
 
 
