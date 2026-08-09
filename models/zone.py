@@ -30,6 +30,7 @@ class Zone:
         maxDrones: int,
         type: ZoneType = ZoneType.NORMAL,
         category: ZoneCategory = ZoneCategory.HUB,
+        current_drones: int = 0
     ):
         self.name = name
         self.color = color
@@ -38,6 +39,7 @@ class Zone:
         self.connections: List[Connection] = []
         self.type = type
         self.category = category
+        self.current_drones = current_drones
 
     def zone_cost(self) -> float:
         """return the cost of moving to this zone
@@ -58,3 +60,7 @@ class Zone:
 
     def is_goal_zone(self) -> bool:
         return self.category == ZoneCategory.END_HUB
+
+    def availible_capacity(self) -> int:
+        """return the available capacity of the zone"""
+        return self.maxDrones - self.current_drones

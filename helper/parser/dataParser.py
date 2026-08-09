@@ -89,6 +89,8 @@ class DataParser:
                     max_drones = 0
                     if key.upper() == "HUB":
                         max_drones = int(meta_dict.get("max_drones", 1))
+                    elif key.upper() in ["START_HUB", "END_HUB"]:
+                        max_drones = map.nbDrones+1
 
                     # Parse the ZoneType Enum securely
                     zone_type_str = meta_dict.get("zone", "normal").upper()
@@ -98,7 +100,7 @@ class DataParser:
                     except KeyError:
                         zone_type = ZoneType.NORMAL
 
-                    # 4. Create Zone and store it in our dictionary
+                    # 4. Create Zone and addit to map
                     zone = Zone(
                         name=name,
                         color=color,
@@ -106,6 +108,9 @@ class DataParser:
                         maxDrones=max_drones,
                         type=zone_type,
                         category=ZoneCategory[key.upper()],
+                        current_drones=(map.nbDrones if
+                                        ZoneCategory[key.upper()] ==
+                                        ZoneCategory.START_HUB else 0)
                     )
                     map.zones.add(zone)
 
