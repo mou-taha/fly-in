@@ -107,10 +107,7 @@ class DataParser:
                         coordinate=(x, y),
                         maxDrones=max_drones,
                         type=zone_type,
-                        category=ZoneCategory[key.upper()],
-                        current_drones=(map.nbDrones if
-                                        ZoneCategory[key.upper()] ==
-                                        ZoneCategory.START_HUB else 0)
+                        category=ZoneCategory[key.upper()]
                     )
                     map.zones.add(zone)
 

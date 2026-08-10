@@ -7,4 +7,3 @@ class Connection:
         self.zone = zone
         self.maxLinkCapacity = maxLinkCapacity
         self.current_drones = 0
-
