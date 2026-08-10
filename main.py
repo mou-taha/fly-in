@@ -6,6 +6,7 @@ from models.map import Map
 from models.path import Path
 from helper.pathfinding.path_finding import PathFinding
 from models.simulator import Simulator
+from models.drone import Drone
 
 
 def main():
@@ -25,7 +26,25 @@ def main():
         #     path_names = [zone.name for zone in path.zones]
         #     print(f"Path {i}: {' -> '.join(path_names)}")
         #     print(f"Path cost: {path.get_cost()}")
-        map.paths = paths
+
+        # take just the first path or first two paths
+        map.paths = paths[:2]
+        # split the drones on the different paths
+        if len(map.paths) > 1:
+            amount_1 = map.nbDrones // 2
+            map.paths[0].zones[0].drones = [
+                Drone(index, map.paths[0], map.paths[0].zones[0])
+                for index in range(amount_1)
+            ]
+            map.paths[1].zones[0].drones = [
+                Drone(index, map.paths[1], map.paths[1].zones[0])
+                for index in range(amount_1, map.nbDrones)
+            ]
+        else:
+            map.paths[0].zones[0].drones = [
+                Drone(index, map.paths[0], map.paths[0].zones[0])
+                for index in range(map.nbDrones)
+            ]
         simulator: Simulator = Simulator(map)
         simulator.run()
     except (ParsingException, PathFindingException, SimulationException) as e:
