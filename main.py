@@ -16,10 +16,9 @@ def main():
         map = parser.parse_network_file()
 
         path_finding: PathFinding = PathFinding(map)
-        print(f"Total Drones: {map.nbDrones}")
-        print(f"Total Zones Loaded: {len(map.zones)}")
+        # print(f"Total Drones: {map.nbDrones}")
+        # print(f"Total Zones Loaded: {len(map.zones)}")
 
-        print("\n\n\n\n\nFinding all possible paths:")
         paths: list[Path] = path_finding.get_all_possible_paths()
         print(f"Total Paths: {len(paths)}")
         # for i, path in enumerate(paths, 1):
@@ -33,16 +32,16 @@ def main():
         if len(map.paths) > 1:
             amount_1 = map.nbDrones // 2
             map.paths[0].zones[0].drones = [
-                Drone(index, map.paths[0], map.paths[0].zones[0])
+                Drone(index + 1, map.paths[0], map.paths[0].zones[0])
                 for index in range(amount_1)
             ]
             map.paths[1].zones[0].drones = [
-                Drone(index, map.paths[1], map.paths[1].zones[0])
+                Drone(index + 1, map.paths[1], map.paths[1].zones[0])
                 for index in range(amount_1, map.nbDrones)
             ]
         else:
             map.paths[0].zones[0].drones = [
-                Drone(index, map.paths[0], map.paths[0].zones[0])
+                Drone(index + 1, map.paths[0], map.paths[0].zones[0])
                 for index in range(map.nbDrones)
             ]
         simulator: Simulator = Simulator(map)
