@@ -12,9 +12,6 @@ class Simulator:
             raise SimulationException("no path to follow")
         end_zone: Zone = self.map.get_end_zone()
 
-        def turn() -> None:
+        while len(end_zone.drones) < self.map.nbDrones:
             for path in self.map.paths:
                 path.turn()
-
-        while len(end_zone.drones) < self.map.nbDrones:
-            turn()
