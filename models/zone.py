@@ -40,7 +40,6 @@ class Zone:
         self.connections: List[Connection] = []
         self.type = type
         self.category = category
-        self.current_drones = 0
         self.drones: List[Drone] = []
 
     def zone_cost(self) -> float:
@@ -65,4 +64,4 @@ class Zone:
 
     def available_capacity(self) -> int:
         """return the available capacity of the zone"""
-        return self.maxDrones - self.current_drones
+        return self.maxDrones - len(self.drones)

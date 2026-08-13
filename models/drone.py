@@ -1,6 +1,6 @@
-from models.connection import Connection
 from models.path import Path
 from models.zone import Zone
+from models.connection import Connection
 
 
 class Drone:
