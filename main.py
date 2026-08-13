@@ -28,22 +28,35 @@ def main():
 
         # take just the first path or first two paths
         map.paths = paths[:2]
+        # initialize per-path drone lists for each zone in the path and link path->map
+        for path in map.paths:
+            path.zone_drones = {zone: [] for zone in path.zones}
+            path.map = map
+
+        start_zone = map.get_start_zone()
         # split the drones on the different paths
         if len(map.paths) > 1:
             amount_1 = map.nbDrones // 2
-            map.paths[0].zones[0].drones = [
-                Drone(index + 1, map.paths[0], map.paths[0].zones[0])
+            dlist0 = [
+                Drone(index + 1, map.paths[0], start_zone)
                 for index in range(amount_1)
             ]
-            map.paths[1].zones[0].drones = [
-                Drone(index + 1, map.paths[1], map.paths[1].zones[0])
+            dlist1 = [
+                Drone(index + 1, map.paths[1], start_zone)
                 for index in range(amount_1, map.nbDrones)
             ]
+            map.paths[0].zone_drones[start_zone] = dlist0
+            map.paths[1].zone_drones[start_zone] = dlist1
+            # update global map zone drone lists so capacity reflects all paths
+            map.extendZoneDrones(start_zone, dlist0)
+            map.extendZoneDrones(start_zone, dlist1)
         else:
-            map.paths[0].zones[0].drones = [
-                Drone(index + 1, map.paths[0], map.paths[0].zones[0])
+            dlist = [
+                Drone(index + 1, map.paths[0], start_zone)
                 for index in range(map.nbDrones)
             ]
+            map.paths[0].zone_drones[start_zone] = dlist
+            map.extendZoneDrones(start_zone, dlist)
         simulator: Simulator = Simulator(map)
         simulator.run()
     except (ParsingException, PathFindingException, SimulationException) as e:

@@ -67,7 +67,9 @@ class PathFinding:
             # If we reached the destination,
             # add a copy of the path to our results
             if current_zone.name == end_zone.name:
-                all_paths.append(Path(list(current_path)))
+                path = Path(list(current_path))
+                path.map = self.map
+                all_paths.append(path)
             else:
                 # Explore all connected zones that haven't been
                 # visited in the current path

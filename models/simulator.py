@@ -14,7 +14,10 @@ class Simulator:
 
         turns: str = ""
         while len(end_zone.drones) < self.map.nbDrones:
+            # reset per-turn connection usage so we start counting capacity fresh each simulation turn
+            self.map.reset_connection_usage()
             turns: str = ""
             for path in self.map.paths:
                 turns += path.turn()
-            print(turns)
+            if turns != "":
+                print(turns)
