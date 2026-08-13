@@ -90,7 +90,7 @@ class DataParser:
                     if key.upper() == "HUB":
                         max_drones = int(meta_dict.get("max_drones", 1))
                     elif key.upper() in ["START_HUB", "END_HUB"]:
-                        max_drones = map.nbDrones+1
+                        max_drones = map.nbDrones + 1
 
                     # Parse the ZoneType Enum securely
                     zone_type_str = meta_dict.get("zone", "normal").upper()
@@ -107,7 +107,7 @@ class DataParser:
                         coordinate=(x, y),
                         maxDrones=max_drones,
                         type=zone_type,
-                        category=ZoneCategory[key.upper()]
+                        category=ZoneCategory[key.upper()],
                     )
                     map.zones.add(zone)
 
@@ -167,9 +167,9 @@ class DataParser:
                     )
                 if nameA.lower() == nameB.lower():
                     raise ParsingException(
-                                        f"line {conn_line}: can't have reflexive connection\n"
-                                        f"{conn_str}"
-                                    )
+                        f"line {conn_line}: can't have reflexive connection\n"
+                        f"{conn_str}"
+                    )
                 if zoneA and zoneB:
                     capacity = int(meta_dict.get("max_link_capacity", 1))
 
@@ -191,10 +191,18 @@ class DataParser:
                             f"{base_text}\n  {conn_str}"
                         )
                     zoneA.connections.append(
-                        Connection(zone=zoneB, maxLinkCapacity=capacity)
+                        Connection(
+                            zone=zoneB,
+                            name=f"{zoneA.name}-{zoneB.name}",
+                            maxLinkCapacity=capacity,
+                        )
                     )
                     zoneB.connections.append(
-                        Connection(zone=zoneA, maxLinkCapacity=capacity)
+                        Connection(
+                            zone=zoneA,
+                            name=f"{zoneA.name}-{zoneB.name}",
+                            maxLinkCapacity=capacity,
+                        )
                     )
 
         # 6. Create the Map object containing all our zones
@@ -225,7 +233,7 @@ class DataParser:
 
         base = text[:last__opening_bracket_index]
         meta_raw = text[
-            last__opening_bracket_index + 1: last__closing_bracket_index + 1
+            last__opening_bracket_index + 1 : last__closing_bracket_index + 1
         ]
         base = base.strip()
         closing_bracket_index = meta_raw.rfind("]")
@@ -246,7 +254,7 @@ class DataParser:
             if "=" not in item:
                 raise ParsingException(f"Invalid metadata format: '{item}'")
             key, val = item.split("=", 1)
-            if len([k for k, v in meta_dict.items() if k == key]) > 0:
+            if len([k for k, _ in meta_dict.items() if k == key]) > 0:
                 raise ParsingException(f"Duplicated metadata key: '{key}'")
             meta_dict[key] = val
 
