@@ -233,7 +233,7 @@ class DataParser:
 
         base = text[:last__opening_bracket_index]
         meta_raw = text[
-            last__opening_bracket_index + 1 : last__closing_bracket_index + 1
+            last__opening_bracket_index + 1: last__closing_bracket_index + 1
         ]
         base = base.strip()
         closing_bracket_index = meta_raw.rfind("]")
