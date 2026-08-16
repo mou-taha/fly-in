@@ -10,12 +10,18 @@ from models.simulator import Simulator
 from models.drone import Drone
 import subprocess
 from helper.terminal.terminal import choose_map_file
+from colorama import Fore, Style
+from pathlib import Path as FilePath
+from typing import List
 
 
 def run_simulation_for_file(map_file: str) -> None:
-    subprocess.call("clear")
 
-    print(f"Selected map file: {map_file}")
+    subprocess.call("clear")
+    print(
+        Fore.BLUE + Style.BRIGHT,
+        f"Selected map file: {Fore.GREEN}{FilePath(map_file).name}{Fore.RESET}\n",
+    )
     parser: DataParser = DataParser(map_file)
 
     map: Map
@@ -53,7 +59,16 @@ def run_simulation_for_file(map_file: str) -> None:
         map.extendZoneDrones(start_zone, dlist)
 
     simulator: Simulator = Simulator(map)
-    simulator.run()
+    result: List[str] = simulator.run()
+    print(
+        Fore.BLUE
+        + " Total turns: "
+        + Fore.GREEN
+        + f"{len(result)}\n"
+        + Fore.WHITE
+    )
+    for t in result:
+        print(t)
 
 
 def main():
@@ -66,7 +81,9 @@ def main():
                 break
             run_simulation_for_file(map_file)
             print(
-                "\n menu reopened. Choose another file or exit.\n"
+                Fore.CYAN
+                + "\n menu reopened. Choose another file or exit.\n"
+                + Fore.WHITE
             )
         except (
             FileNotFoundError,
@@ -74,7 +91,7 @@ def main():
             ParsingException,
             PathFindingException,
             SimulationException,
-            Exception
+            Exception,
         ) as e:
             print(e)
             print("\nReturning to the menu...\n")

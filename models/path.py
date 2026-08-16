@@ -1,6 +1,7 @@
 from typing import List
 from models.zone import Zone, ZoneCategory, ZoneType
 from models.connection import Connection
+from helper.terminal.terminal import color_text
 
 
 class Path:
@@ -39,7 +40,7 @@ class Path:
                     None,
                 )
                 if traversal_conn is not None:
-                    turns += self._flush_connection_to_zone(
+                    turns += self._move_drones_in_connection(
                         traversal_conn, target_zone
                     )
                 res: str = self.__move_drone(previous_zone, target_zone)
@@ -48,7 +49,7 @@ class Path:
                     turns += res
         return turns
 
-    def _flush_connection_to_zone(
+    def _move_drones_in_connection(
         self, connection: Connection, target_zone: Zone
     ) -> str:
         """Try to move drones waiting on a connection into
@@ -183,7 +184,10 @@ class Path:
                 )
                 for drone in drone_to_move:
                     drone.current_place = target_zone
-                    msg += f"D{drone.id}-{drone.current_place.name} "
+                    msg += (
+                        f"D{drone.id}-"
+                        + f"{color_text(drone.current_place.name, drone.current_place.color)} "
+                    )
 
             for d in drone_to_move:
                 self.zone_drones[prev_zone].remove(d)

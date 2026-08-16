@@ -1,5 +1,58 @@
 from simple_term_menu import TerminalMenu  # type: ignore
 from pathlib import Path as FileSystemPath
+from enum import Enum
+
+
+class Colors(Enum):
+    BLACK = "\033[30m"
+    RED = "\033[31m"
+    GREEN = "\033[32m"
+    BLUE = "\033[34m"
+    YELLOW = "\033[33m"
+    CYAN = "\033[36m"
+    MAGENTA = "\033[35m"
+    WHITE = "\033[37m"
+    RESET = "\033[0m"
+    PURPLE = "\033[95m"
+    BROWN = "\033[33m"
+    ORANGE = "\033[38;5;208m"
+    MARRON = "\033[38;5;88m"
+    GOLD = "\033[38;5;220m"
+    DARKRED = "\033[38;5;52m"
+    CRIMSON = "\033[38;5;161m"
+    VIOLET = "\033[95m"
+
+
+def get_code_color(color_name: str) -> str:
+    color_name = color_name.upper()
+    return (
+        Colors[color_name].value
+        if color_name in Colors.__members__
+        else Colors.WHITE.value
+    )
+
+
+def color_text(text: str, color_name: str) -> str:
+    colors = [
+        "\033[31m",  # Red
+        "\033[93m",  # Bright Yellow
+        "\033[32m",  # Green
+        "\033[36m",  # Cyan
+        "\033[34m",  # Blue
+        "\033[35m",  # Magenta
+    ]
+    reset = Colors.WHITE.value
+
+    # Apply a color to each character
+    if color_name.upper() == "RAINBOW":
+        rainbow_text = "".join(
+            f"{colors[i % len(colors)]}{char}" for i, char in enumerate(text)
+        )
+    else:
+        color = get_code_color(color_name)
+        return f"{color}{text}{reset}"
+
+    return rainbow_text + reset
 
 
 def choose_map_file(project_root: FileSystemPath) -> str | None:

@@ -8,6 +8,7 @@ dependencies = [
     "pydantic>=2.13.4",
     "simple-term-menu>=1.6.4",
     "rich>=13.0.0",
+    "colorama>=0.4.6",
 ]
 [tool.black]
 line-length = 79
