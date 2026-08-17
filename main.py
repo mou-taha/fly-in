@@ -16,11 +16,20 @@ from typing import List
 
 
 def run_simulation_for_file(map_file: str) -> None:
+    """parse given map, validate data and run simulation
+
+    Args:
+        map_file: map to execute
+
+    Returns:
+        None"""
 
     subprocess.call("clear")
     print(
         Fore.BLUE + Style.BRIGHT,
-        f"Selected map file: {Fore.GREEN}{FilePath(map_file).name}{Fore.RESET}\n",
+        "Selected map file: "
+        + Fore.GREEN
+        + f"{FilePath(map_file).name}{Fore.RESET}\n",
     )
     parser: DataParser = DataParser(map_file)
 
@@ -30,33 +39,48 @@ def run_simulation_for_file(map_file: str) -> None:
     path_finding: PathFinding = PathFinding(map)
     paths: list[Path] = path_finding.get_all_possible_paths()
 
-    map.paths = paths[:2]
+    map.paths = paths[:5]
     for path in map.paths:
         path.zone_drones = {zone: [] for zone in path.zones}
         path.map = map
 
     start_zone = map.get_start_zone()
-    if len(map.paths) > 1:
-        amount_1 = map.nbDrones // 2
-        dlist0 = [
-            Drone(index + 1, map.paths[0], start_zone)
-            for index in range(amount_1)
-        ]
-        dlist1 = [
-            Drone(index + 1, map.paths[1], start_zone)
-            for index in range(amount_1, map.nbDrones)
-        ]
-        map.paths[0].zone_drones[start_zone] = dlist0
-        map.paths[1].zone_drones[start_zone] = dlist1
-        map.extendZoneDrones(start_zone, dlist0)
-        map.extendZoneDrones(start_zone, dlist1)
-    else:
-        dlist = [
-            Drone(index + 1, map.paths[0], start_zone)
-            for index in range(map.nbDrones)
-        ]
-        map.paths[0].zone_drones[start_zone] = dlist
-        map.extendZoneDrones(start_zone, dlist)
+    max_used_path = 5
+    path_count = (max_used_path if max_used_path < len(map.paths)
+                  else len(map.paths))
+
+    if path_count == 0:
+        raise ValueError("No valid path found for the current map.")
+
+    ratios = {
+        1: [1.0],
+        2: [0.7, 0.3],
+        3: [0.5, 0.25, 0.25],
+        4: [0.25, 0.25, 0.25, 0.25],
+        5: [0.2, 0.2, 0.2, 0.2, 0.2],
+    }
+    chosen_ratios = ratios.get(path_count, [1.0 / path_count] * path_count)
+
+    # find the number of drones to split on paths
+    counts = [int(map.nbDrones * ratio) for ratio in chosen_ratios]
+
+    # add the remainder number of drones to the first path
+    remainder_drones = map.nbDrones - sum(counts)
+    counts[0] += remainder_drones
+
+    drones_by_path: list[list[Drone]] = []
+    drone_id = 1
+
+    # start assigning drones to paths
+    for path_index, count in enumerate(counts):
+        assigned = []
+        for _ in range(count):
+            assigned.append(Drone(drone_id, map.paths[path_index], start_zone))
+            drone_id += 1
+        drones_by_path.append(assigned)
+        # dispatch drones on start zone for every path
+        map.paths[path_index].zone_drones[start_zone] = assigned
+        map.extendZoneDrones(start_zone, assigned)
 
     simulator: Simulator = Simulator(map)
     result: List[str] = simulator.run()
@@ -64,7 +88,14 @@ def run_simulation_for_file(map_file: str) -> None:
         Fore.BLUE
         + " Total turns: "
         + Fore.GREEN
-        + f"{len(result)}\n"
+        + f"{len(result)}"
+        + Fore.WHITE
+    )
+    print(
+        Fore.BLUE
+        + " Total turns: "
+        + Fore.GREEN
+        + f"{map.nbDrones}\n"
         + Fore.WHITE
     )
     for t in result:

@@ -3,6 +3,7 @@ from typing import List
 
 
 class Connection:
+    """this class define a connection between two zones"""
 
     def __init__(self, name: str, zone: Zone, maxLinkCapacity: int):
         from models.drone import Drone
