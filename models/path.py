@@ -186,6 +186,7 @@ class Path:
                     drone.current_place = target_zone
                     msg += (
                         f"D{drone.id}-"
+                        + ""
                         + f"{color_text(drone.current_place.name, drone.current_place.color)} "
                     )
 

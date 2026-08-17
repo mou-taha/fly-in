@@ -16,8 +16,9 @@ class Simulator:
         turns: List[str] = []
         while len(end_zone.drones) < self.map.nbDrones:
             self.map.reset_connection_usage()
+            turn = ""
             for path in self.map.paths:
-                turn = path.turn()
-                if turn != "":
-                    turns.append(turn)
+                turn += path.turn()
+            if turn != "":
+                turns.append(turn)
         return turns
