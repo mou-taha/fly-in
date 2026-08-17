@@ -184,11 +184,10 @@ class Path:
                 )
                 for drone in drone_to_move:
                     drone.current_place = target_zone
-                    msg += (
-                        f"D{drone.id}-"
-                        + ""
-                        + f"{color_text(drone.current_place.name, drone.current_place.color)} "
+                    colored_zone = color_text(
+                        drone.current_place.name, drone.current_place.color
                     )
+                    msg += f"D{drone.id}-" + "" + f"{colored_zone} "
 
             for d in drone_to_move:
                 self.zone_drones[prev_zone].remove(d)

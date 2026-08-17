@@ -46,8 +46,9 @@ def run_simulation_for_file(map_file: str) -> None:
 
     start_zone = map.get_start_zone()
     max_used_path = 5
-    path_count = (max_used_path if max_used_path < len(map.paths)
-                  else len(map.paths))
+    path_count = (
+        max_used_path if max_used_path < len(map.paths) else len(map.paths)
+    )
 
     if path_count == 0:
         raise ValueError("No valid path found for the current map.")
@@ -73,7 +74,7 @@ def run_simulation_for_file(map_file: str) -> None:
 
     # start assigning drones to paths
     for path_index, count in enumerate(counts):
-        assigned = []
+        assigned: List[Drone] = []
         for _ in range(count):
             assigned.append(Drone(drone_id, map.paths[path_index], start_zone))
             drone_id += 1
@@ -86,16 +87,16 @@ def run_simulation_for_file(map_file: str) -> None:
     result: List[str] = simulator.run()
     print(
         Fore.BLUE
-        + " Total turns: "
+        + " Total drones: "
         + Fore.GREEN
-        + f"{len(result)}"
+        + f"{map.nbDrones}\n"
         + Fore.WHITE
     )
     print(
         Fore.BLUE
         + " Total turns: "
         + Fore.GREEN
-        + f"{map.nbDrones}\n"
+        + f"{len(result)}"
         + Fore.WHITE
     )
     for t in result:
