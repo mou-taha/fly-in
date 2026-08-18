@@ -16,20 +16,22 @@ class PathFinding:
         end_zone: Zone = [zone for zone in self.map.zones
                           if zone.category == ZoneCategory.END_HUB][0]
         unvisited: List[Zone] = [start_zone]
-        visited: list[Zone] = []
+        visited: set[Zone] = set()
         if not end_zone or not start_zone:
             raise PathFindingException("end zone or start zone"
                                        " are not defined")
 
         while len(unvisited) > 0:
             current: Zone = unvisited.pop()
-            visited.append(current)
+            visited.add(current)
+            if end_zone == current:
+                return True
             unvisited.extend([connection.zone for connection
                               in current.connections
                               if connection.zone not in visited
                               and connection.zone not in unvisited])
 
-        return end_zone in visited
+        return False
 
     def get_all_possible_paths(self) -> List[Path]:
         """

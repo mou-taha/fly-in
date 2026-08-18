@@ -89,14 +89,14 @@ def run_simulation_for_file(map_file: str) -> None:
         Fore.BLUE
         + " Total drones: "
         + Fore.GREEN
-        + f"{map.nbDrones}\n"
+        + f"{map.nbDrones}"
         + Fore.WHITE
     )
     print(
         Fore.BLUE
         + " Total turns: "
         + Fore.GREEN
-        + f"{len(result)}"
+        + f"{len(result)}\n"
         + Fore.WHITE
     )
     for t in result:
