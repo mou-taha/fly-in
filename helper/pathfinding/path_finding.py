@@ -11,25 +11,36 @@ class PathFinding:
         self.map = map
 
     def _check_disconnected_zones(self) -> bool:
-        start_zone: Zone = [zone for zone in self.map.zones
-                            if zone.category == ZoneCategory.START_HUB][0]
-        end_zone: Zone = [zone for zone in self.map.zones
-                          if zone.category == ZoneCategory.END_HUB][0]
+        start_zone: Zone = [
+            zone
+            for zone in self.map.zones
+            if zone.category == ZoneCategory.START_HUB
+        ][0]
+        end_zone: Zone = [
+            zone
+            for zone in self.map.zones
+            if zone.category == ZoneCategory.END_HUB
+        ][0]
         unvisited: List[Zone] = [start_zone]
         visited: set[Zone] = set()
         if not end_zone or not start_zone:
-            raise PathFindingException("end zone or start zone"
-                                       " are not defined")
+            raise PathFindingException(
+                "end zone or start zone" " are not defined"
+            )
 
         while len(unvisited) > 0:
             current: Zone = unvisited.pop()
             visited.add(current)
             if end_zone == current:
                 return True
-            unvisited.extend([connection.zone for connection
-                              in current.connections
-                              if connection.zone not in visited
-                              and connection.zone not in unvisited])
+            unvisited.extend(
+                [
+                    connection.zone
+                    for connection in current.connections
+                    if connection.zone not in visited
+                    and connection.zone not in unvisited
+                ]
+            )
 
         return False
 
@@ -43,13 +54,26 @@ class PathFinding:
         :return: A list of paths, where each path is a list of Zone objects.
         """
         if not self._check_disconnected_zones():
-            raise PathFindingException("there is no path on the given "
-                                       "map to the end zone.")
+            raise PathFindingException(
+                "there is no path on the given " "map to the end zone."
+            )
         # Verify both zones exist in the map
-        start_zone = next((zone for zone in self.map.zones
-                           if zone.category == ZoneCategory.START_HUB), None)
-        end_zone = next((zone for zone in self.map.zones
-                         if zone.category == ZoneCategory.END_HUB), None)
+        start_zone = next(
+            (
+                zone
+                for zone in self.map.zones
+                if zone.category == ZoneCategory.START_HUB
+            ),
+            None,
+        )
+        end_zone = next(
+            (
+                zone
+                for zone in self.map.zones
+                if zone.category == ZoneCategory.END_HUB
+            ),
+            None,
+        )
         if start_zone is None or end_zone is None:
             return []
 
@@ -87,37 +111,3 @@ class PathFinding:
         dfs(start_zone, [])
         all_paths = sorted(all_paths, key=lambda path: path.get_cost())
         return all_paths
-
-    def find_shortest_paths(self) -> List[Path]:
-        """finding shortest path using Dijkstra"""
-        if not self._check_disconnected_zones():
-            raise PathFindingException("there is no path on the given "
-                                       "map to the end zone.")
-        start_zone: Zone = self.map.get_start_zone()
-        paths: List[tuple[float, int, Path]] = [(0, 0, Path([start_zone]))]
-        result: List[Path] = []
-        counter: int = 0
-        while paths:
-            current_path_weight: float
-            current_path: Path
-            current_path_weight, _, current_path = paths.pop(0)
-            current_zone: Zone = current_path.zones[-1]
-
-            # if the zone is blocked we will not continue discovring the path
-            if current_zone.type == ZoneType.BLOCKED:
-                continue
-
-            if current_zone.is_goal_zone():
-                result.append(current_path)
-                continue
-
-            for neighbor in current_zone.connections:
-                if neighbor.zone in current_path.zones:
-                    continue
-                new_path = Path(list.copy(current_path.zones))
-                new_path.zones.append(neighbor.zone)
-                heapq.heappush(paths, (neighbor.zone.zone_cost()
-                               + current_path_weight, counter, new_path))
-                counter += 1
-
-        return result
