@@ -1,4 +1,4 @@
-from simple_term_menu import TerminalMenu  # type: ignore
+from simple_term_menu import TerminalMenu
 from pathlib import Path as FileSystemPath
 from enum import Enum
 
