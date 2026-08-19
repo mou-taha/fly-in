@@ -1,7 +1,10 @@
 from pathlib import Path as FileSystemPath
 from .helper.parser import DataParser
-from .helper.exceptions import (ParsingException, PathFindingException,
-                               SimulationException)
+from .helper.exceptions import (
+    ParsingException,
+    PathFindingException,
+    SimulationException,
+)
 from .models.map import Map
 from .models.path import Path
 from .helper.pathfinding import PathFinding
@@ -28,8 +31,7 @@ def run_simulation_for_file(map_file: str) -> None:
         Fore.BLUE + Style.BRIGHT,
         "Selected map file: "
         + Fore.GREEN
-        + f"{FilePath(map_file).name}{Fore.RESET}\n",
-    )
+        + f"{FilePath(map_file).name}{Fore.RESET}\n")
     parser: DataParser = DataParser(map_file)
 
     map: Map
@@ -102,7 +104,7 @@ def run_simulation_for_file(map_file: str) -> None:
         print(t)
 
 
-def main():
+def main() -> None:
     while True:
         try:
             project_root = FileSystemPath(__file__).resolve().parent.parent

@@ -78,7 +78,7 @@ class PathFinding:
 
         all_paths: List[Path] = []
 
-        def dfs(current_zone: Zone, current_path: list[Zone]):
+        def dfs(current_zone: Zone, current_path: list[Zone]) -> None:
             # Add the current zone to the path and mark it as visited
             # also this list contain the visited zones in the current path
             # to avoid cycles

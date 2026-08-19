@@ -10,6 +10,7 @@ from ..models.path import Path
 
 class Map:
     """this class for represent the map"""
+
     def __init__(
         self,
         nbDrones: int,
@@ -60,7 +61,7 @@ class Map:
         Args:
             zone: target zone
             drones: drones to remove
-        
+
         Returns:
             None"""
         if zone in self.zones:
@@ -82,7 +83,7 @@ class Map:
         )
         # available = capacity - already waiting on connection - already
         # reserved this turn
-        return max(0, connection.maxLinkCapacity - waiting - used)
+        return int(max(0, connection.maxLinkCapacity - waiting - used))
 
     def add_connection_usage(self, connection: Connection, count: int) -> None:
         """update connection usage

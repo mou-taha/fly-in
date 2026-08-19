@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Any
 from ..models.zone import Zone, ZoneCategory, ZoneType
 from ..models.connection import Connection
 from ..helper.terminal.terminal import color_text
@@ -17,7 +17,7 @@ class Path:
             zone: [] for zone in zones
         }
 
-    def get_cost(self) -> float:
+    def get_cost(self) -> Any:
         return sum([zone.zone_cost() for zone in self.zones])
 
     def turn(self) -> str:
