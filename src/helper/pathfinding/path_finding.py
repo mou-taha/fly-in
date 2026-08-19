@@ -1,9 +1,8 @@
-from models.map import Map
-from models.zone import Zone, ZoneCategory, ZoneType
-from models.path import Path
+from ...models.map import Map
+from ...models.zone import Zone, ZoneCategory, ZoneType
+from ...models.path import Path
 from typing import List
-from helper.exceptions.path_finding_exception import PathFindingException
-import heapq
+from ...helper.exceptions import PathFindingException
 
 
 class PathFinding:
@@ -103,7 +102,7 @@ class PathFinding:
                     if neighbor.zone not in current_path:
                         dfs(neighbor.zone, current_path)
 
-            # Backtrack: remove the current zone from path and visited set
+            # Backtrack: remove the current zone from path
             # so it can be explored via different routes
             current_path.pop()
 

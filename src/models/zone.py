@@ -1,10 +1,9 @@
-from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, List
 from sys import maxsize
 
 if TYPE_CHECKING:
-    from models.connection import Connection
+    from ..models.connection import Connection
 
 
 class ZoneType(Enum):
@@ -31,7 +30,7 @@ class Zone:
         type: ZoneType = ZoneType.NORMAL,
         category: ZoneCategory = ZoneCategory.HUB,
     ):
-        from models.drone import Drone
+        from ..models.drone import Drone
 
         self.name = name
         self.color = color

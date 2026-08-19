@@ -1,15 +1,14 @@
 from pathlib import Path as FileSystemPath
-from helper.parser.dataParser import DataParser
-from helper.exceptions.parsingException import ParsingException
-from helper.exceptions.path_finding_exception import PathFindingException
-from helper.exceptions.simulation_exception import SimulationException
-from models.map import Map
-from models.path import Path
-from helper.pathfinding.path_finding import PathFinding
-from models.simulator import Simulator
-from models.drone import Drone
+from .helper.parser import DataParser
+from .helper.exceptions import (ParsingException, PathFindingException,
+                               SimulationException)
+from .models.map import Map
+from .models.path import Path
+from .helper.pathfinding import PathFinding
+from .models.simulator import Simulator
+from .models.drone import Drone
 import subprocess
-from helper.terminal.terminal import choose_map_file
+from .helper.terminal import choose_map_file
 from colorama import Fore, Style
 from pathlib import Path as FilePath
 from typing import List
@@ -104,9 +103,9 @@ def run_simulation_for_file(map_file: str) -> None:
 
 
 def main():
-    project_root = FileSystemPath(__file__).resolve().parent
     while True:
         try:
+            project_root = FileSystemPath(__file__).resolve().parent.parent
             map_file = choose_map_file(project_root)
             if map_file is None:
                 print("Goodbye.")

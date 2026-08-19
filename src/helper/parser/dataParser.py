@@ -1,6 +1,7 @@
-from models.zone import Zone, ZoneType, ZoneCategory
-from models.connection import Connection
-from models.map import Map
+
+from ...models.connection import Connection
+from ...models.map import Map
+from ...models.zone import Zone, ZoneCategory, ZoneType
 from typing import Any, List
 from ..exceptions.parsingException import ParsingException
 import re

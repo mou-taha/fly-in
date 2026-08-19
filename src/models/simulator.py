@@ -1,6 +1,6 @@
-from models.map import Map
-from models.zone import Zone
-from helper.exceptions.simulation_exception import SimulationException
+from ..models.map import Map
+from ..models.zone import Zone
+from ..helper.exceptions.simulation_exception import SimulationException
 from typing import List
 
 
