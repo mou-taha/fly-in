@@ -1,11 +1,11 @@
-from models.connection import Connection
+from ..models.connection import Connection
 from typing import Dict, List
 
-from models.drone import Drone
+from ..models.drone import Drone
 
 from .zone import Zone
-from models.zone import ZoneCategory
-from models.path import Path
+from ..models.zone import ZoneCategory
+from ..models.path import Path
 
 
 class Map:

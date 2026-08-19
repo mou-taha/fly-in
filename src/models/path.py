@@ -1,13 +1,13 @@
 from typing import List
-from models.zone import Zone, ZoneCategory, ZoneType
-from models.connection import Connection
-from helper.terminal.terminal import color_text
+from ..models.zone import Zone, ZoneCategory, ZoneType
+from ..models.connection import Connection
+from ..helper.terminal.terminal import color_text
 
 
 class Path:
     def __init__(self, zones: List[Zone]) -> None:
-        from models.map import Map
-        from models.drone import Drone
+        from ..models.map import Map
+        from ..models.drone import Drone
 
         self.zones = zones
         self.map: Map = Map(0, set())

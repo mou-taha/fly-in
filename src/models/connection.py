@@ -1,4 +1,4 @@
-from models.zone import Zone
+from ..models.zone import Zone
 from typing import List
 
 
@@ -6,7 +6,7 @@ class Connection:
     """this class define a connection between two zones"""
 
     def __init__(self, name: str, zone: Zone, maxLinkCapacity: int):
-        from models.drone import Drone
+        from ..models.drone import Drone
 
         self.zone = zone
         self.name = name
