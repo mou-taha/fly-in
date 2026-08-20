@@ -66,7 +66,7 @@ class Path:
         if not connection.drones:
             return ""
 
-        # determine canonical target capacity
+        # determine target capacity
 
         target_capacity = target_zone.available_capacity()
 
@@ -105,7 +105,7 @@ class Path:
         return turns
 
     def __move_drone(self, previous: Zone, target: Zone) -> str:
-        """move drones from a zone to another zone
+        """move drones from a zone to another zone if capacity allow
 
         Args:
             previous (Zone): zone that hold drones
@@ -114,20 +114,12 @@ class Path:
         Returns:
             str: turn
         """
-
-        # compute available capacity for this path's view of the target zone
-        # find the canonical zone object in the map and use
-        # its available_capacity()
-
         target_capacity = target.available_capacity()
-
         prev_list = self.zone_drones.get(previous, [])
+
+        # move drones if only capacity allow and if there is drones
+        # on previous zone
         if target_capacity > 0 and len(prev_list) > 0:
-            nb_drones_to_move: int = (
-                len(prev_list)
-                if len(prev_list) <= target_capacity
-                else target_capacity
-            )
 
             # check if connection supports the number of drones
             # that will traverse to target zone
@@ -139,15 +131,14 @@ class Path:
             # enforce shared connection capacity across paths
             # using map connection usage
             conn_available = self.map.get_connection_available(traversal)
-            if nb_drones_to_move > conn_available:
-                nb_drones_to_move = conn_available
-
+            nb_drones_to_move = min(
+                len(prev_list), target_capacity, conn_available
+            )
             drone_to_move = prev_list[:nb_drones_to_move]
             msg: str = ""
 
             # reserve connection capacity immediately so subsequent
             # paths in this turn see the reduced available capacity
-            traversal_conn: Connection | None = None
             traversal_conn = next(
                 cn
                 for cn in previous.connections
@@ -155,9 +146,8 @@ class Path:
             )
             self.map.add_connection_usage(traversal_conn, len(drone_to_move))
 
-            # If the target is a restricted zone, drones must wait on
-            # the connection until the zone has capacity; place them on
-            # the connection instead of directly into the zone.
+            # If the target is a restricted zone, drones must move in two turns
+            # so it must move to the connection after to the target zone
             if target.type == ZoneType.RESTRICTED:
                 # place drones on the connection (they are waiting to enter)
                 traversal_conn.drones.extend(drone_to_move)
@@ -169,9 +159,11 @@ class Path:
                 for drone in drone_to_move:
                     drone.current_place = target
                     msg += f"D{drone.id}-{traversal_conn.name} "
+            # if the target is a normal zone the move to it cost one turn
             else:
                 # update global map zone lists and per-path tracking
                 self.map.extendZoneDrones(target, drone_to_move)
+
                 # add to target per-path list and remove
                 # from previous per-path list
                 self.zone_drones.setdefault(target, []).extend(drone_to_move)

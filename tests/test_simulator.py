@@ -70,7 +70,7 @@ def simulate_map(map_file_path: Path):
         ("maps/hard/01_maze_nightmare.txt", 30),
         ("maps/hard/02_capacity_hell.txt", 35),
         ("maps/hard/03_ultimate_challenge.txt", 45),
-        # challenger (optional) — included as a performance target
+        # challenger (optional)
         ("maps/challenger/01_the_impossible_dream.txt", 45),
     ],
 )

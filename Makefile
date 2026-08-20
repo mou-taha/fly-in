@@ -1,6 +1,7 @@
 PYTHON = python
 MODULE = src
 SRC_DIR = src
+TEST = pytest
 MYPY_FLAGS = --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
 
 all:run
@@ -10,6 +11,9 @@ install:
 
 run:
 	uv run $(PYTHON) -m $(MODULE)
+
+test:
+	uv run $(TEST)
 
 debug:
 	uv run $(PYTHON) -m pdb -m $(MODULE)
