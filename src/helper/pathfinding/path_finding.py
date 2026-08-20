@@ -6,10 +6,21 @@ from ...helper.exceptions import PathFindingException
 
 
 class PathFinding:
+    """contain method that find paths."""
+
     def __init__(self, map: Map):
         self.map = map
 
     def _check_disconnected_zones(self) -> bool:
+        """check if the map has no path to the goal.
+
+        Raises:
+            PathFindingException: if there is no start or end zone.
+
+        Returns:
+            bool: True if there is at least one path to the end zone,
+                False if there is no path to the goal zone
+        """
         start_zone: Zone = [
             zone
             for zone in self.map.zones
@@ -44,13 +55,15 @@ class PathFinding:
         return False
 
     def get_all_possible_paths(self) -> List[Path]:
-        """
-        Finds all possible simple paths between a start and end zone on a map.
+        """Finds all possible simple paths between a start
+        and end zone on a map.
 
-        :param map_obj: The Map object containing zones and connections.
-        :param start_zone_name: The name of the starting zone (e.g., 'A').
-        :param end_zone_name: The name of the destination zone (e.g., 'G').
-        :return: A list of paths, where each path is a list of Zone objects.
+        Raises:
+            PathFindingException: _description_
+
+        Returns:
+            List[Path]:A list of paths, where each path
+            is a list of Zone objects.
         """
         if not self._check_disconnected_zones():
             raise PathFindingException(
@@ -79,6 +92,12 @@ class PathFinding:
         all_paths: List[Path] = []
 
         def dfs(current_zone: Zone, current_path: list[Zone]) -> None:
+            """dfs algo for path finding.
+
+            Args:
+                current_zone (Zone): current zone.
+                current_path (list[Zone]): actual path.
+            """
             # Add the current zone to the path and mark it as visited
             # also this list contain the visited zones in the current path
             # to avoid cycles
