@@ -8,7 +8,7 @@ from .helper.exceptions import (
 from .models.map import Map
 from .models.path import Path
 from .helper.pathfinding import PathFinding
-from .models.simulator import Simulator
+from .helper.simulator import Simulator
 from .models.drone import Drone
 import subprocess
 from .helper.terminal import choose_map_file
