@@ -1,4 +1,4 @@
-PYTHON = python
+PYTHON = python3
 MODULE = src
 SRC_DIR = src
 TEST = pytest
@@ -12,15 +12,19 @@ install:
 run:
 	uv run $(PYTHON) -m $(MODULE)
 
-test:
-	uv run $(TEST)
-
 debug:
 	uv run $(PYTHON) -m pdb -m $(MODULE)
 
+test:
+	uv run $(TEST)
+
 clean:
-	find . -type d \( -name "__pycache__" -o -name ".mypy_cache" \) -exec rm -rf {} +
+	find . -type d \( -name "__pycache__" -o -name ".mypy_cache" -o -name ".venv" -o -name ".pytest_cache" \) -exec rm -rf {} +
 
 lint:
-	flake8 $(SRC_DIR)
-	uv run mypy src $(MYPY_FLAGS)
+	flake8 .
+	mypy . $(MYPY_FLAGS)
+
+lint-strict:
+	flake8 .
+	mypy . --strict
