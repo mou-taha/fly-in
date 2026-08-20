@@ -31,7 +31,8 @@ def run_simulation_for_file(map_file: str) -> None:
         Fore.BLUE + Style.BRIGHT,
         "Selected map file: "
         + Fore.GREEN
-        + f"{FilePath(map_file).name}{Fore.RESET}\n")
+        + f"{FilePath(map_file).name}{Fore.RESET}\n",
+    )
     parser: DataParser = DataParser(map_file)
 
     map: Map
@@ -46,10 +47,7 @@ def run_simulation_for_file(map_file: str) -> None:
         path.map = map
 
     start_zone = map.get_start_zone()
-    max_used_path = 5
-    path_count = (
-        max_used_path if max_used_path < len(map.paths) else len(map.paths)
-    )
+    path_count = min(5, len(map.paths))
 
     if path_count == 0:
         raise ValueError("No valid path found for the current map.")
