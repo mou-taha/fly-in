@@ -1,10 +1,9 @@
-from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, List
 from sys import maxsize
 
 if TYPE_CHECKING:
-    from models.connection import Connection
+    from ..models.connection import Connection
 
 
 class ZoneType(Enum):
@@ -31,6 +30,8 @@ class Zone:
         type: ZoneType = ZoneType.NORMAL,
         category: ZoneCategory = ZoneCategory.HUB,
     ):
+        from ..models.drone import Drone
+
         self.name = name
         self.color = color
         self.coordinate = coordinate
@@ -38,6 +39,7 @@ class Zone:
         self.connections: List[Connection] = []
         self.type = type
         self.category = category
+        self.drones: List[Drone] = []
 
     def zone_cost(self) -> float:
         """return the cost of moving to this zone
@@ -58,3 +60,7 @@ class Zone:
 
     def is_goal_zone(self) -> bool:
         return self.category == ZoneCategory.END_HUB
+
+    def available_capacity(self) -> int:
+        """return the available capacity of the zone"""
+        return self.maxDrones - len(self.drones)

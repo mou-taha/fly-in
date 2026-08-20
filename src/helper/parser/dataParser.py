@@ -1,16 +1,27 @@
-from models.zone import Zone, ZoneType, ZoneCategory
-from models.connection import Connection
-from models.map import Map
+from ...models.connection import Connection
+from ...models.map import Map
+from ...models.zone import Zone, ZoneCategory, ZoneType
 from typing import Any, List
 from ..exceptions.parsingException import ParsingException
 import re
 
 
 class DataParser:
+    """parsing map and validating it"""
+
     def __init__(self, filePath: str) -> None:
         self.filePath = filePath
 
     def parse_network_file(self) -> Map:
+        """
+        Parse the filePath and return an object type map
+
+        Raises:
+            ParsingException: if there is an error on the file
+
+        Returns:
+            Map: _description_
+        """
         map = Map(nbDrones=-1, zones=set())
 
         # store connection lines to process after  all zones are created
@@ -89,6 +100,8 @@ class DataParser:
                     max_drones = 0
                     if key.upper() == "HUB":
                         max_drones = int(meta_dict.get("max_drones", 1))
+                    elif key.upper() in ["START_HUB", "END_HUB"]:
+                        max_drones = map.nbDrones + 1
 
                     # Parse the ZoneType Enum securely
                     zone_type_str = meta_dict.get("zone", "normal").upper()
@@ -98,7 +111,7 @@ class DataParser:
                     except KeyError:
                         zone_type = ZoneType.NORMAL
 
-                    # 4. Create Zone and store it in our dictionary
+                    # 4. Create Zone and addit to map
                     zone = Zone(
                         name=name,
                         color=color,
@@ -165,9 +178,9 @@ class DataParser:
                     )
                 if nameA.lower() == nameB.lower():
                     raise ParsingException(
-                                        f"line {conn_line}: can't have reflexive connection\n"
-                                        f"{conn_str}"
-                                    )
+                        f"line {conn_line}: can't have reflexive connection\n"
+                        f"{conn_str}"
+                    )
                 if zoneA and zoneB:
                     capacity = int(meta_dict.get("max_link_capacity", 1))
 
@@ -189,10 +202,18 @@ class DataParser:
                             f"{base_text}\n  {conn_str}"
                         )
                     zoneA.connections.append(
-                        Connection(zone=zoneB, maxLinkCapacity=capacity)
+                        Connection(
+                            zone=zoneB,
+                            name=f"{zoneA.name}-{zoneB.name}",
+                            maxLinkCapacity=capacity,
+                        )
                     )
                     zoneB.connections.append(
-                        Connection(zone=zoneA, maxLinkCapacity=capacity)
+                        Connection(
+                            zone=zoneA,
+                            name=f"{zoneA.name}-{zoneB.name}",
+                            maxLinkCapacity=capacity,
+                        )
                     )
 
         # 6. Create the Map object containing all our zones
@@ -201,7 +222,15 @@ class DataParser:
     def extract_metadata(self, text: str) -> tuple[str, dict[str, Any]]:
         """
         Separates the base text from the metadata brackets.
-        Returns: (base_text, metadata_dict)
+
+        Args:
+            text (str): metadata row line
+
+        Raises:
+            ParsingException: if there is an error on the metadata line
+
+        Returns:
+            tuple[str, dict[str, Any]]: metadata
         """
         last__opening_bracket_index: int = text.rfind("[")
         last__closing_bracket_index: int = text.rfind("]")
@@ -244,13 +273,23 @@ class DataParser:
             if "=" not in item:
                 raise ParsingException(f"Invalid metadata format: '{item}'")
             key, val = item.split("=", 1)
-            if len([k for k, v in meta_dict.items() if k == key]) > 0:
+            if len([k for k, _ in meta_dict.items() if k == key]) > 0:
                 raise ParsingException(f"Duplicated metadata key: '{key}'")
             meta_dict[key] = val
 
         return base, meta_dict
 
     def validate_lines(self, lines: List[str]) -> List[str]:
+        """validate lines of the file if they respect the format skip empty
+        lines and comments
+
+        Args:
+            lines (List[str]): lines of the file
+
+        Returns:
+            List[str]: return list empty if there is no error on
+            the lines, otherwise return list of detected errors
+        """
         result: List[str] = []
         for index, raw_line in enumerate(lines):
             line = raw_line.split("#", 1)[0].strip()
@@ -283,6 +322,14 @@ class DataParser:
         return result
 
     def _validate_nb_drones(self, value: str) -> str | None:
+        """validate the given number of drones
+
+        Args:
+            value (str | none): the number of drones
+
+        Returns:
+            str | None: msg error if nb of drones not valid, none if valid.
+        """
         if not value:
             return "nb_drones requires a positive integer value."
         if not re.fullmatch(r"\d+", value):
@@ -290,6 +337,15 @@ class DataParser:
         return None
 
     def _validate_zone_line(self, key: str, value: str) -> str | None:
+        """validate zone line
+
+        Args:
+            key (str): key of the line
+            value (str): the value of the line
+
+        Returns:
+            str | None: msg error if line not valid, none if valid.
+        """
         try:
             base_text, meta_dict = self.extract_metadata(value)
         except ParsingException as e:
@@ -341,6 +397,14 @@ class DataParser:
         return None
 
     def _validate_connection_line(self, value: str) -> str | None:
+        """validate connection line
+
+        Args:
+            value (str): connection line
+
+        Returns:
+            str | None: msg error if line not valid, none if valid.
+        """
         try:
             base_text, meta_dict = self.extract_metadata(value)
         except ParsingException as e:
