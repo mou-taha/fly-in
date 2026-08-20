@@ -78,12 +78,9 @@ class Map:
         Returns:
             positive integer represent the availability for this connection"""
         used = self._connection_usage.get(connection, 0)
-        waiting = (
-            len(connection.drones) if hasattr(connection, "drones") else 0
-        )
-        # available = capacity - already waiting on connection - already
-        # reserved this turn
-        return int(max(0, connection.maxLinkCapacity - waiting - used))
+
+        # available = capacity - already waiting on connection
+        return int(max(0, connection.maxLinkCapacity - used))
 
     def add_connection_usage(self, connection: Connection, count: int) -> None:
         """update connection usage

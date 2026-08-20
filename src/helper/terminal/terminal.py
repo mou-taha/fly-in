@@ -46,7 +46,7 @@ def color_text(text: str, color_name: str) -> str:
     # Apply a color to each character
     if color_name.upper() == "RAINBOW":
         rainbow_text = "".join(
-            f"{colors[i % len(colors)]}{char}" for i, char in enumerate(text)
+            f"{colors[i % len(colors)]}{char}{reset}" for i, char in enumerate(text)
         )
     else:
         color = get_code_color(color_name)
@@ -61,7 +61,7 @@ def choose_map_file(project_root: FileSystemPath) -> str | None:
     menu_entries = []
     if available_files:
         menu_entries = [
-            str(file_path.relative_to(project_root))
+            str(file_path.relative_to(project_root).name)
             for file_path in available_files
         ]
     menu_entries.append("Custom file path...")
