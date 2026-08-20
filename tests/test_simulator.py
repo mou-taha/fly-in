@@ -6,13 +6,12 @@ from src.helper.pathfinding.path_finding import PathFinding
 from src.helper.simulator import Simulator
 from src.models.drone import Drone
 
-
 # Ensure src is importable
 project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root / "src"))
 
 
-def simulate_map(map_file_path: Path):
+def simulate_map(map_file_path: Path) -> list[str]:
     parser = DataParser(str(map_file_path))
     map_obj = parser.parse_network_file()
 
@@ -74,7 +73,7 @@ def simulate_map(map_file_path: Path):
         ("maps/challenger/01_the_impossible_dream.txt", 45),
     ],
 )
-def test_simulator_performance(relpath: str, target: int):
+def test_simulator_performance(relpath: str, target: int) -> None:
     map_path = project_root / relpath
     assert map_path.exists(), f"Map file not found: {map_path}"
     turns = simulate_map(map_path)
