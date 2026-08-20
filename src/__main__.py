@@ -103,6 +103,7 @@ def run_simulation_for_file(map_file: str) -> None:
 
 
 def main() -> None:
+    """main function."""
     while True:
         try:
             project_root = FileSystemPath(__file__).resolve().parent.parent
@@ -129,4 +130,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    """program entry point."""
     main()

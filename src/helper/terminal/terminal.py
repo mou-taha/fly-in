@@ -4,6 +4,12 @@ from enum import Enum
 
 
 class Colors(Enum):
+    """colors to use for zones
+
+    Args:
+        Enum (_type_): color code to use for print() function
+    """
+
     BLACK = "\033[30m"
     RED = "\033[31m"
     GREEN = "\033[32m"
@@ -24,6 +30,15 @@ class Colors(Enum):
 
 
 def get_code_color(color_name: str) -> str:
+    """find the code color from a string if the color doesn't exist.
+    its return the code of color white
+
+    Args:
+        color_name (str): color name
+
+    Returns:
+        str: code color to use for print() function.
+    """
     color_name = color_name.upper()
     return (
         Colors[color_name].value
@@ -33,6 +48,18 @@ def get_code_color(color_name: str) -> str:
 
 
 def color_text(text: str, color_name: str) -> str:
+    """take a string and add to it the desire color code at the beginning
+    and rest it at the end with white.
+    and for the color rainbow iterate over the text and add for each char
+    a specific color.
+
+    Args:
+        text (str): desire text to color.
+        color_name (str): color.
+
+    Returns:
+        str: return a colored string.
+    """
     colors = [
         "\033[31m",  # Red
         "\033[93m",  # Bright Yellow
@@ -45,7 +72,7 @@ def color_text(text: str, color_name: str) -> str:
 
     # Apply a color to each character
     if color_name.upper() == "RAINBOW":
-        rainbow_text = "".join(
+        text = "".join(
             f"{colors[i % len(colors)]}{char}{reset}"
             for i, char in enumerate(text)
         )
@@ -53,10 +80,23 @@ def color_text(text: str, color_name: str) -> str:
         color = get_code_color(color_name)
         return f"{color}{text}{reset}"
 
-    return rainbow_text + reset
+    return text + reset
 
 
 def choose_map_file(project_root: FileSystemPath) -> str | None:
+    """
+    show a menu on terminal where the user can choose a map or a custom file.
+
+    Args:
+        project_root (FileSystemPath): root dir for the project
+
+    Raises:
+        ValueError: if no custom file provided.
+        FileNotFoundError: if the custom file doesn't exist.
+
+    Returns:
+        str | None: none or selected file path.
+    """
     maps_dir = project_root / "maps"
     available_files = sorted(p for p in maps_dir.rglob("*.txt") if p.is_file())
     menu_entries = []

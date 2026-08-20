@@ -5,6 +5,8 @@ from ..helper.terminal.terminal import color_text
 
 
 class Path:
+    """represent a single path from start zone to the goal inside map."""
+
     def __init__(self, zones: List[Zone]) -> None:
         from ..models.map import Map
         from ..models.drone import Drone
@@ -26,6 +28,11 @@ class Path:
         return sum([zone.zone_cost() for zone in self.zones])
 
     def turn(self) -> str:
+        """move drones from connection or zone to a another connection or zone.
+
+        Returns:
+            str: return the turns that has been executed
+        """
         turns: str = ""
         for index, target_zone in reversed(list(enumerate(self.zones))):
             # process all zones except the start hub; restricted zones are
