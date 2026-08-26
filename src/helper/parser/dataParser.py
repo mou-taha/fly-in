@@ -10,6 +10,7 @@ class DataParser:
     """parsing map and validating it"""
 
     def __init__(self, filePath: str) -> None:
+        """Create a parser for a map file."""
         self.filePath = filePath
 
     def parse_network_file(self) -> Map:
@@ -29,6 +30,10 @@ class DataParser:
         keyCounter: int = 0
 
         with open(self.filePath, "r") as file:
+            content = file.read()
+            if not content or content.isspace():
+                raise ParsingException(f"{file.name} file is empty")
+            file.seek(0)
             fileLines: List[str] = file.readlines()
             lineValidations: List[str] = self.validate_lines(fileLines)
             if len(lineValidations) > 0:
@@ -69,7 +74,7 @@ class DataParser:
                         raise ParsingException(
                             f"line {index+1}: start zone "
                             "already declared,"
-                            "must be"
+                            "must be only"
                             f" one start zone.\n {line}"
                         )
                     if key == "end_hub" and ZoneCategory["END_HUB"] in [
@@ -78,8 +83,8 @@ class DataParser:
                         raise ParsingException(
                             f"line {index+1}: end zone"
                             " already declared,"
-                            f" must be one"
-                            " end zone.\n {line}"
+                            f" must be one only"
+                            f" end zone.\n {line}"
                         )
                     if name in [zone.name for zone in map.zones]:
                         raise ParsingException(
@@ -93,6 +98,17 @@ class DataParser:
                         raise ParsingException(
                             f"line {index+1}: the zone coordinate must be "
                             "a valid integer."
+                        )
+
+                    existing_zone = next(
+                        (z for z in map.zones if z.coordinate == (x, y)),
+                        None,
+                    )
+                    if existing_zone is not None:
+                        raise ParsingException(
+                            f"line {index+1}: the zone coordinate of the zone "
+                            f"[{name}] already used for the zone "
+                            f"[{existing_zone.name}]."
                         )
                     # 3. Apply defaults & metadata
                     # Default values based on your rules

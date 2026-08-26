@@ -1,8 +1,6 @@
 from ..models.connection import Connection
 from typing import Dict, List
-
 from ..models.drone import Drone
-
 from .zone import Zone
 from ..models.zone import ZoneCategory
 from ..models.path import Path
@@ -16,6 +14,7 @@ class Map:
         nbDrones: int,
         zones: set[Zone],
     ):
+        "Create a map with the number of drones and the zone set."
         self.nbDrones = nbDrones
         self.zones = zones
         self.paths: list[Path] = []

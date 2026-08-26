@@ -5,9 +5,10 @@ from typing import List
 
 
 class Simulator:
-    """for running simulation"""
+    """utils for running simulation"""
 
     def __init__(self, map: Map):
+        """Create a simulator for a map."""
         self.map = map
 
     def run(self) -> List[str]:

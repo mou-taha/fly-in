@@ -124,6 +124,7 @@ def main() -> None:
             PathFindingException,
             SimulationException,
             Exception,
+            BaseException,
         ) as e:
             print(e)
             print("\nReturning to the menu...\n")

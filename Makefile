@@ -15,9 +15,6 @@ run:
 debug:
 	uv run $(PYTHON) -m pdb -m $(MODULE)
 
-test:
-	uv run $(TEST)
-
 clean:
 	find . -type d \( -name "__pycache__" -o -name ".mypy_cache" -o -name ".venv" -o -name ".pytest_cache" \) -exec rm -rf {} +
 

@@ -7,6 +7,8 @@ if TYPE_CHECKING:
 
 
 class ZoneType(Enum):
+    """Types of zones used by the simulation."""
+
     NORMAL = 1
     BLOCKED = 2
     RESTRICTED = 3
@@ -14,12 +16,15 @@ class ZoneType(Enum):
 
 
 class ZoneCategory(Enum):
+    """Categories used to identify map hubs."""
+
     HUB = 1
     START_HUB = 2
     END_HUB = 3
 
 
 class Zone:
+    """A map node with coordinates, capacity, and connections"""
 
     def __init__(
         self,
@@ -30,6 +35,7 @@ class Zone:
         type: ZoneType = ZoneType.NORMAL,
         category: ZoneCategory = ZoneCategory.HUB,
     ):
+        """Create a zone with its name, position, and rules."""
         from ..models.drone import Drone
 
         self.name = name
@@ -59,6 +65,11 @@ class Zone:
             return maxsize
 
     def is_goal_zone(self) -> bool:
+        """Return whether this zone is the end hub.
+
+        Returns:
+            bool: true if zone is goal zone, otherwise false.
+        """
         return self.category == ZoneCategory.END_HUB
 
     def available_capacity(self) -> int:

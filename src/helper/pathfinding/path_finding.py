@@ -6,9 +6,10 @@ from ...helper.exceptions import PathFindingException
 
 
 class PathFinding:
-    """contain method that find paths."""
+    """Path-finding utilities for the map."""
 
     def __init__(self, map: Map):
+        """Create a parser for a map file."""
         self.map = map
 
     def _check_disconnected_zones(self) -> bool:

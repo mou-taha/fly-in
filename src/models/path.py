@@ -1,4 +1,4 @@
-from typing import List, Any
+from typing import List
 from ..models.zone import Zone, ZoneCategory, ZoneType
 from ..models.connection import Connection
 from ..helper.terminal.terminal import color_text
@@ -8,6 +8,7 @@ class Path:
     """represent a single path from start zone to the goal inside map."""
 
     def __init__(self, zones: List[Zone]) -> None:
+        """create a path from a list of zones."""
         from ..models.map import Map
         from ..models.drone import Drone
 
@@ -19,13 +20,13 @@ class Path:
             zone: [] for zone in zones
         }
 
-    def get_cost(self) -> Any:
-        """calculate the total cost to traverse all path
+    def get_cost(self) -> int:
+        """Return the total cost of the path.
 
         Returns:
-            Any: cost
+            int: cost.
         """
-        return sum([zone.zone_cost() for zone in self.zones])
+        return int(sum([zone.zone_cost() for zone in self.zones]))
 
     def turn(self) -> str:
         """move drones from connection or zone to a another connection or zone.
